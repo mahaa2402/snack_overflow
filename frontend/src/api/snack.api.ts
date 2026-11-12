@@ -142,7 +142,7 @@ export const restockSnackApi = async (
   amount: number
 ): Promise<{ snack: SnackItem; activity: ActivityItem }> => {
   const response = await apiClient.post<ApiResponse<{ snack: SnackItem; activity: ActivityItem }>>(
-    `/admin/snacks/${snackId}/restock`,
+    `/snacks/${snackId}/restock`,
     { amount }
   );
   if (!response.data.data) {

@@ -2,7 +2,9 @@ import { Request, Response, NextFunction } from 'express';
 import { snackService } from '../services/snack.service';
 import { sendSuccess } from '../utils/apiResponse';
 import {
+  validateConsumeSnack,
   validateCreateSnack,
+  validateRestockSnack,
   validateSnackQuery,
   validateUpdateSnack,
 } from '../validators/snack.validator';
@@ -94,16 +96,16 @@ export class SnackController {
 
   /**
    * POST /snacks/:id/restock
-   * Admin only: Restock snack quantity
+   * Admin only: Restock snack quantity safely
    */
   public restockSnack = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
-      const amount = Number(req.body.amount);
-      if (isNaN(amount) || !Number.isInteger(amount) || amount <= 0) {
-        throw new AppError('Restock amount must be a positive integer', 400, 'VALIDATION_ERROR');
+      if (!id || typeof id !== 'string') {
+        throw new AppError('Snack ID is required', 400, 'VALIDATION_ERROR');
       }
 
+      const { amount } = validateRestockSnack(req.body);
       const result = await snackService.restockSnack(id, req.user!.userId, amount);
       sendSuccess(res, result, `Snack restocked with ${amount} units`, 200);
     } catch (error) {
@@ -113,16 +115,16 @@ export class SnackController {
 
   /**
    * POST /snacks/:id/consume
-   * Member/Admin action: Grab a snack unit
+   * Member/Admin action: Atomic conditional consumption of snack units
    */
   public consumeSnack = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
-      const amount = req.body.amount !== undefined ? Number(req.body.amount) : 1;
-      if (isNaN(amount) || !Number.isInteger(amount) || amount <= 0) {
-        throw new AppError('Amount must be a positive integer', 400, 'VALIDATION_ERROR');
+      if (!id || typeof id !== 'string') {
+        throw new AppError('Snack ID is required', 400, 'VALIDATION_ERROR');
       }
 
+      const { amount } = validateConsumeSnack(req.body);
       const result = await snackService.consumeSnack(id, req.user!.userId, amount);
       sendSuccess(res, result, 'Snack consumed successfully! Enjoy your snack.', 200);
     } catch (error) {

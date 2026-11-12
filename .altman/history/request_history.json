@@ -1,0 +1,62 @@
+[
+  {
+    "id": "1794476196953",
+    "timestamp": 1794476196953,
+    "method": "GET",
+    "url": "http://localhost:5000/api/login",
+    "statusCode": 404,
+    "statusText": "Not Found",
+    "timeMs": 5,
+    "sizeBytes": 134,
+    "collectionName": "",
+    "requestName": "Untitled Request"
+  },
+  {
+    "id": "1794476191469",
+    "timestamp": 1794476191469,
+    "method": "GET",
+    "url": "http://localhost:5000/api/auth/login",
+    "statusCode": 404,
+    "statusText": "Not Found",
+    "timeMs": 5,
+    "sizeBytes": 139,
+    "collectionName": "",
+    "requestName": "Untitled Request"
+  },
+  {
+    "id": "1794476172072",
+    "timestamp": 1794476172072,
+    "method": "GET",
+    "url": "http://localhost:5000/api/snacks",
+    "statusCode": 200,
+    "statusText": "OK",
+    "timeMs": 224,
+    "sizeBytes": 3374,
+    "collectionName": "",
+    "requestName": "Untitled Request"
+  },
+  {
+    "id": "1794475918237",
+    "timestamp": 1794475918237,
+    "method": "GET",
+    "url": "/api/snacks",
+    "statusCode": 0,
+    "statusText": "Error: Invalid URL",
+    "timeMs": 3,
+    "sizeBytes": 0,
+    "collectionName": "",
+    "requestName": "Untitled Request"
+  },
+  {
+    "id": "1794475867815",
+    "timestamp": 1794475867815,
+    "method": "POST",
+    "url": "/api/auth/login",
+    "statusCode": 0,
+    "statusText": "Error: Invalid URL",
+    "timeMs": 5,
+    "sizeBytes": 0,
+    "collectionName": "",
+    "requestName": "Untitled Request"
+  }
+]

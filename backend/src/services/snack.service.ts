@@ -291,28 +291,41 @@ export class SnackService {
 
   /**
    * Restock snack inventory (Admin only)
+   * Safely increments quantity and logs Activity in the same transaction.
+   * If activity insertion fails, the stock increment rolls back.
    */
   public async restockSnack(id: string, adminUserId: string, amount: number) {
     if (!amount || amount <= 0 || !Number.isInteger(amount)) {
-      throw new AppError('Restock amount must be a positive integer', 400, 'VALIDATION_ERROR');
+      throw new AppError('Restock amount must be a positive integer (> 0)', 400, 'VALIDATION_ERROR');
     }
 
     return prisma.$transaction(async (tx) => {
-      const snack = await tx.snack.findUnique({
+      // 1. Verify snack exists
+      const existing = await tx.snack.findUnique({
         where: { id },
+        select: { id: true },
       });
 
-      if (!snack) {
+      if (!existing) {
         throw new AppError('Snack not found', 404, 'NOT_FOUND');
       }
 
+      // 2. Safely increment quantity at database level
       const updated = await tx.snack.update({
         where: { id },
         data: {
-          quantity: snack.quantity + amount,
+          quantity: {
+            increment: amount,
+          },
+        },
+        include: {
+          _count: {
+            select: { votes: true },
+          },
         },
       });
 
+      // 3. Insert Activity record in the same transaction
       const activity = await tx.activity.create({
         data: {
           userId: adminUserId,
@@ -323,7 +336,11 @@ export class SnackService {
       });
 
       return {
-        snack: withDerivedStatus(updated),
+        snack: {
+          ...withDerivedStatus(updated),
+          voteCount: updated._count.votes,
+          hasVoted: false,
+        },
         activity,
       };
     });
@@ -331,36 +348,66 @@ export class SnackService {
 
   /**
    * Consume a snack (Member/Admin)
+   * Uses an atomic database-level conditional update inside a transaction.
+   * Conditions: id = snackId AND quantity >= amount.
+   * Decrements quantity ONLY when the condition matches.
+   * If stock is insufficient, returns 409 Conflict.
+   * If snack does not exist, returns 404 Not Found.
+   * Inserts Activity in the same transaction. If activity fails, rollback occurs.
    */
   public async consumeSnack(snackId: string, userId: string, amount: number = 1) {
     if (!amount || amount <= 0 || !Number.isInteger(amount)) {
-      throw new AppError('Amount must be a positive integer', 400, 'VALIDATION_ERROR');
+      throw new AppError('Amount must be a positive integer (> 0)', 400, 'VALIDATION_ERROR');
     }
 
     return prisma.$transaction(async (tx) => {
-      const snack = await tx.snack.findUnique({
-        where: { id: snackId },
-      });
-
-      if (!snack) {
-        throw new AppError('Snack not found', 404, 'NOT_FOUND');
-      }
-
-      if (snack.quantity < amount || snack.quantity <= 0) {
-        throw new AppError(
-          `Cannot consume snack. Only ${snack.quantity} item(s) available.`,
-          400,
-          'OUT_OF_STOCK'
-        );
-      }
-
-      const updated = await tx.snack.update({
-        where: { id: snackId },
+      // 1. Atomic database-level conditional update via updateMany
+      // Conditions: id = snackId AND quantity >= amount
+      const updateResult = await tx.snack.updateMany({
+        where: {
+          id: snackId,
+          quantity: {
+            gte: amount,
+          },
+        },
         data: {
-          quantity: snack.quantity - amount,
+          quantity: {
+            decrement: amount,
+          },
         },
       });
 
+      // 2. If affected row count is 0, condition did not match.
+      // Differentiate between "Snack does not exist" (404) and "Insufficient stock" (409)
+      if (updateResult.count === 0) {
+        const existing = await tx.snack.findUnique({
+          where: { id: snackId },
+          select: { id: true, quantity: true },
+        });
+
+        if (!existing) {
+          throw new AppError('Snack not found', 404, 'NOT_FOUND');
+        }
+
+        // Snack exists, but quantity was less than requested amount
+        throw new AppError(
+          `Insufficient stock available. Requested ${amount}, but only ${existing.quantity} remaining.`,
+          409,
+          'INSUFFICIENT_STOCK'
+        );
+      }
+
+      // 3. Fetch the newly updated snack record
+      const updatedSnack = await tx.snack.findUnique({
+        where: { id: snackId },
+        include: {
+          _count: {
+            select: { votes: true },
+          },
+        },
+      });
+
+      // 4. Insert corresponding Activity record in the SAME database transaction
       const activity = await tx.activity.create({
         data: {
           userId,
@@ -371,7 +418,11 @@ export class SnackService {
       });
 
       return {
-        snack: withDerivedStatus(updated),
+        snack: {
+          ...withDerivedStatus(updatedSnack!),
+          voteCount: updatedSnack!._count.votes,
+          hasVoted: false,
+        },
         activity,
       };
     });

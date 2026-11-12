@@ -242,3 +242,50 @@ export const validateSnackQuery = (query: Record<string, unknown>): ValidatedSna
   };
 };
 
+/**
+ * Validates request payload for consuming a snack (POST /snacks/:id/consume)
+ */
+export const validateConsumeSnack = (body: unknown): { amount: number } => {
+  if (body === undefined || body === null || body === '') {
+    return { amount: 1 };
+  }
+
+  if (typeof body !== 'object' || Array.isArray(body)) {
+    throw new AppError('Request body must be a JSON object', 400, 'VALIDATION_ERROR');
+  }
+
+  const payload = body as Record<string, unknown>;
+
+  if (payload.amount === undefined || payload.amount === null) {
+    return { amount: 1 };
+  }
+
+  const amount = Number(payload.amount);
+  if (isNaN(amount) || !Number.isInteger(amount) || amount <= 0) {
+    throw new AppError('Amount must be a positive integer (> 0)', 400, 'VALIDATION_ERROR');
+  }
+
+  return { amount };
+};
+
+/**
+ * Validates request payload for restocking a snack (POST /snacks/:id/restock)
+ */
+export const validateRestockSnack = (body: unknown): { amount: number } => {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    throw new AppError('Request body must be a JSON object', 400, 'VALIDATION_ERROR');
+  }
+
+  const payload = body as Record<string, unknown>;
+
+  if (payload.amount === undefined || payload.amount === null) {
+    throw new AppError('Restock amount is required', 400, 'VALIDATION_ERROR');
+  }
+
+  const amount = Number(payload.amount);
+  if (isNaN(amount) || !Number.isInteger(amount) || amount <= 0) {
+    throw new AppError('Restock amount must be a positive integer (> 0)', 400, 'VALIDATION_ERROR');
+  }
+
+  return { amount };
+};

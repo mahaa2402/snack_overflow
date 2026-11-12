@@ -53,19 +53,49 @@ npm run dev               # Starts UI on http://localhost:5173
 - **Sign In:** `http://localhost:5173/login`
 - **Register Member:** `http://localhost:5173/signup`
 
-### 3. Automated Test Suite (27 Tests)
+### 3. Automated Test Suite (56 Tests across 6 Test Suites)
 ```bash
 cd backend
 npm test
 ```
-Runs 27 integration tests covering:
-- Pantry snack listing, filtering, search, and pagination
-- Snack inventory statistics calculation
-- Snack consumption and stock decrementing
-- Single-vote per user database constraint enforcement
-- Admin Add, Edit, Delete, and Restock operations
-- Member access control & 403 Forbidden protection
-- JWT authentication, bcrypt password security, and public member registration
+Runs 56 integration and unit tests covering:
+- **Atomic Concurrency & Anti-Overselling:** Simulates 10 simultaneous requests to consume the last 3 items using `Promise.all`; verifies exactly 3 succeed (200), 7 fail with 409 Conflict, final stock is 0, and exactly 3 consumption activity records are logged in PostgreSQL.
+- **Stock Consumption & Restocking:** Atomic conditional updates via `updateMany`, transaction rollback safety, and positive integer validation.
+- **Pantry snack listing, filtering, search, and pagination:** Server-side filtering by category and derived status.
+- **Snack inventory statistics calculation:** Live counts of total snacks, items, low-stock, and out-of-stock.
+- **Single-vote per user database constraint enforcement:** DB-level unique constraint `(userId, snackId)`.
+- **Admin CRUD & Restock operations:** Add, edit, delete with cascade/cleanup, and restock.
+- **Member access control & 403 Forbidden protection:** Unprivileged users cannot restock, edit, or delete snacks.
+- **JWT authentication, bcrypt password security, and public member registration:** Role elevation prevention, cookie/bearer auth.
+
+---
+
+## ⚡ Concurrency & Stock Correctness Architecture
+
+### 1. Conditional Atomic Decrement
+To prevent race conditions and overselling under high concurrency:
+- We **never** read quantity into Node.js application memory and then issue an unconditional decrement (`UPDATE ... SET quantity = quantity - 1`).
+- We **never** rely on in-memory locks or mutexes, which fail in distributed or multi-instance environments.
+- Instead, we perform a **database-level atomic conditional update** inside a Prisma transaction:
+  ```typescript
+  const updateResult = await tx.snack.updateMany({
+    where: {
+      id: snackId,
+      quantity: { gte: amount }, // Conditional check executed atomically by PostgreSQL
+    },
+    data: {
+      quantity: { decrement: amount },
+    },
+  });
+  ```
+- **PostgreSQL Row-Level Locking:** During the `UPDATE`, PostgreSQL acquires an exclusive row-level lock on the target row. Concurrent requests queue up. When each queued transaction executes, it reads the newly committed quantity. Once stock drops below `amount`, `quantity >= amount` evaluates to false, updating 0 rows (`updateResult.count === 0`).
+- If `updateResult.count === 0`, we check whether the snack exists: if it exists, HTTP `409 Conflict` (`INSUFFICIENT_STOCK`) is returned; if not, HTTP `404 Not Found` (`NOT_FOUND`) is returned.
+
+### 2. Transaction Integrity & Audit Trail
+Both consumption and restocking execute inside `prisma.$transaction`:
+- Quantity update and `Activity` insertion (`action: 'CONSUMED'` or `'RESTOCKED'`) occur in the same database transaction.
+- If activity insertion or any constraint fails, the entire transaction rolls back automatically.
+- A PostgreSQL storage-level `CHECK (quantity >= 0)` constraint serves as an absolute barrier against negative stock.
 
 ---
 
