@@ -1,0 +1,106 @@
+// Prisma schema for Snack Overflow
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User roles in Snack Overflow
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+// Snack categories
+enum SnackCategory {
+  SWEET
+  SAVOURY
+  DRINK
+  HEALTHY_ISH
+}
+
+// Actions performed in inventory activities
+enum ActivityAction {
+  RESTOCKED
+  CONSUMED
+}
+
+// User model for authentication, role-based authorization, voting, and audit history
+model User {
+  id         String     @id @default(uuid())
+  name       String
+  email      String     @unique
+  password   String
+  role       Role       @default(MEMBER)
+  createdAt  DateTime   @default(now())
+
+  // Relationships
+  votes      Vote[]
+  activities Activity[]
+
+  @@map("users")
+}
+
+// Snack model for tracking snack inventory items
+// Note: Snack status (GONE, RUNNING_LOW, STOCKED) is derived from quantity and lowStockThreshold,
+// not stored as a persistent column.
+model Snack {
+  id                String        @id @default(uuid())
+  name              String        @unique
+  category          SnackCategory
+  quantity          Int           @default(0)
+  lowStockThreshold Int           @default(5)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  // Relationships
+  votes             Vote[]
+  activities        Activity[]
+
+  @@index([category])
+  @@map("snacks")
+}
+
+// Vote model allowing users to vote for snacks
+// Enforces that a user can vote only once per snack via @@unique([userId, snackId])
+model Vote {
+  id        String   @id @default(uuid())
+  userId    String
+  snackId   String
+  createdAt DateTime @default(now())
+
+  // Relationships with foreign keys
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  snack     Snack    @relation(fields: [snackId], references: [id], onDelete: Cascade)
+
+  // A user must be able to vote only once for a particular snack
+  @@unique([userId, snackId])
+  @@index([userId])
+  @@index([snackId])
+  @@map("votes")
+}
+
+// Activity model tracking stock restocking or consumption
+// Amount is enforced positive (> 0) via PostgreSQL CHECK constraint
+model Activity {
+  id        String         @id @default(uuid())
+  userId    String
+  snackId   String
+  action    ActivityAction
+  amount    Int
+  createdAt DateTime       @default(now())
+
+  // Relationships with foreign keys
+  user      User           @relation(fields: [userId], references: [id], onDelete: Restrict)
+  snack     Snack          @relation(fields: [snackId], references: [id], onDelete: Restrict)
+
+  @@index([userId])
+  @@index([snackId])
+  @@index([createdAt])
+  @@map("activities")
+}
