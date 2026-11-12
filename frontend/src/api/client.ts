@@ -5,17 +5,19 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000
 
 export const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
+  withCredentials: true, // Enables sending and receiving HttpOnly cookies across origins
   headers: {
     'Content-Type': 'application/json',
   },
   timeout: 10000,
 });
 
-// Request Interceptor: Attach Auth Token if available
+// Request Interceptor: Attach Auth Token if present in session storage as fallback
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem('token');
-    if (token && config.headers) {
+    // Check sessionStorage (preferred over persistent localStorage for session-bound tokens)
+    const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+    if (token && config.headers && !config.headers.Authorization) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -31,7 +33,6 @@ apiClient.interceptors.response.use(
     return response;
   },
   (error: AxiosError<ApiResponse>) => {
-    // Normalizing API error message
     const formattedError = {
       message: error.response?.data?.message || error.message || 'An unexpected error occurred',
       status: error.response?.status || 500,
@@ -43,4 +44,3 @@ apiClient.interceptors.response.use(
 );
 
 export default apiClient;
-
