@@ -52,7 +52,7 @@ async function main() {
   const snackList = [
     // SWEET
     { name: 'Dark Chocolate Almond Bark', category: SnackCategory.SWEET, quantity: 18, lowStockThreshold: 5 },
-    { name: 'Artisan Glazed Donuts', category: SnackCategory.SWEET, quantity: 3, lowStockThreshold: 5 }, // RUNNING_LOW
+    { name: ' Glazed Donuts', category: SnackCategory.SWEET, quantity: 3, lowStockThreshold: 5 }, // RUNNING_LOW
     { name: 'Organic Gummy Bears', category: SnackCategory.SWEET, quantity: 0, lowStockThreshold: 5 }, // GONE
     { name: 'Cinnamon Sugar Pretzel Bites', category: SnackCategory.SWEET, quantity: 12, lowStockThreshold: 4 },
     // SAVOURY
