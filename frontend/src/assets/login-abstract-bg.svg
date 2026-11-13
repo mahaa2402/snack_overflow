@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="900" viewBox="0 0 1280 900" fill="none">
+  <defs>
+    <linearGradient id="base" x1="0" y1="0" x2="1280" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f8eee3" stop-opacity=".34"/>
+      <stop offset=".48" stop-color="#fffaf5" stop-opacity=".12"/>
+      <stop offset="1" stop-color="#e7d4c0" stop-opacity=".3"/>
+    </linearGradient>
+    <linearGradient id="clay" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#c75b25" stop-opacity=".2"/>
+      <stop offset="1" stop-color="#f4a261" stop-opacity=".04"/>
+    </linearGradient>
+    <linearGradient id="stone" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#29231f" stop-opacity=".1"/>
+      <stop offset="1" stop-color="#766153" stop-opacity=".025"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="900" fill="url(#base)"/>
+  <path d="M0 0h430L244 164 0 91V0Z" fill="#e7d4c0" fill-opacity=".26"/>
+  <path d="m0 91 244 73L84 364 0 318V91Z" fill="url(#clay)"/>
+  <path d="m244 164 186-164h310L514 129 244 164Z" fill="#f4a261" fill-opacity=".1"/>
+  <path d="m244 164 270-35 142 246-318-52-254 41 160-200Z" fill="#d2bca6" fill-opacity=".2"/>
+  <path d="m514 129 226-129h286L844 180 656 375 514 129Z" fill="url(#stone)"/>
+  <path d="m740 0 286 0 254 166-436 14L740 0Z" fill="#f0ddca" fill-opacity=".25"/>
+  <path d="m844 180 436-14v267L984 359l-140-179Z" fill="url(#clay)"/>
+  <path d="m0 318 84 46 254-41 110 252-241 85L0 556V318Z" fill="#e6cbb0" fill-opacity=".19"/>
+  <path d="m338 323 318 52 128 259-336-59-110-252Z" fill="url(#stone)"/>
+  <path d="m656 375 188-195 140 179 296 74v142l-342-37-154 96-142-323Z" fill="#f0ddca" fill-opacity=".24"/>
+  <path d="m0 556 207 104-50 240H0V556Z" fill="url(#clay)"/>
+  <path d="m207 660 241-85 118 226-409 99 50-240Z" fill="#d8c0a7" fill-opacity=".17"/>
+  <path d="m566 801-118-226 336 59 154 96-132 209H516l50-138Z" fill="url(#stone)"/>
+  <path d="m938 730 154-96 188 21v246H806l132-171Z" fill="url(#clay)"/>
+  <path d="m984 359 296 74v222l-188-21-342-37 234-238Z" fill="#e5d0ba" fill-opacity=".18"/>
+</svg>

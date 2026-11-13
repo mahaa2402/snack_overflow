@@ -17,7 +17,10 @@ import { AdminRestockPage } from '../pages/AdminRestockPage';
 import { UnauthorizedPage } from '../pages/UnauthorizedPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
 
-const PublicLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const PublicLayout: React.FC<{ children: React.ReactNode; fullBleed?: boolean }> = ({
+  children,
+  fullBleed = false,
+}) => {
   const { isDark } = useTheme();
 
   return (
@@ -29,7 +32,13 @@ const PublicLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       }`}
     >
       <Header />
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main
+        className={
+          fullBleed
+            ? 'flex flex-1 flex-col'
+            : 'flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8'
+        }
+      >
         {children}
       </main>
       <footer
@@ -72,7 +81,7 @@ export const AppRoutes: React.FC = () => {
           </ProtectedRoute>
         }
       />
-      <Route path="/login" element={<PublicLayout><LoginPage /></PublicLayout>} />
+      <Route path="/login" element={<PublicLayout fullBleed><LoginPage /></PublicLayout>} />
       <Route path="/signup" element={<PublicLayout><SignupPage /></PublicLayout>} />
       <Route path="/unauthorized" element={<PublicLayout><UnauthorizedPage /></PublicLayout>} />
 
