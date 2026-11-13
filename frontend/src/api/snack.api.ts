@@ -3,7 +3,9 @@ import { ApiResponse } from '../types/api';
 import {
   ActivityItem,
   CreateSnackInput,
+  MyPantryDashboard,
   PaginatedSnacks,
+  PantryInsights,
   PantryStats,
   SnackItem,
   UpdateSnackInput,
@@ -151,3 +153,50 @@ export const restockSnackApi = async (
   return response.data.data;
 };
 
+/**
+ * Admin-only global pantry activity timeline.
+ */
+export const getActivitiesApi = async (
+  limit: number = 20,
+  action?: 'CONSUMED' | 'RESTOCKED' | 'ALL'
+): Promise<ActivityItem[]> => {
+  const params: Record<string, string | number> = { limit };
+  if (action && action !== 'ALL') {
+    params.action = action;
+  }
+  const response = await apiClient.get<ApiResponse<ActivityItem[]>>('/admin/activities', { params });
+  return response.data.data || [];
+};
+
+/**
+ * Fetch only the authenticated user's snack grab history.
+ */
+export const getMyActivitiesApi = async (limit: number = 100): Promise<ActivityItem[]> => {
+  const response = await apiClient.get<ApiResponse<ActivityItem[]>>('/activities/me', {
+    params: { limit },
+  });
+  return response.data.data || [];
+};
+
+/**
+ * Fetch a personal dashboard calculated from the authenticated user's activity and votes.
+ */
+export const getMyPantryDashboardApi = async (): Promise<MyPantryDashboard> => {
+  const response = await apiClient.get<ApiResponse<MyPantryDashboard>>('/activities/me/dashboard');
+  if (!response.data.data) {
+    throw new Error('Failed to retrieve your pantry dashboard');
+  }
+  return response.data.data;
+};
+
+/**
+ * Feature 2 & 3: Pantry Analytics, Consumption Trends & Smart Restock Suggestions
+ * Admin only (GET /admin/insights)
+ */
+export const getPantryInsightsApi = async (): Promise<PantryInsights> => {
+  const response = await apiClient.get<ApiResponse<PantryInsights>>('/admin/insights');
+  if (!response.data.data) {
+    throw new Error('Failed to retrieve pantry insights');
+  }
+  return response.data.data;
+};

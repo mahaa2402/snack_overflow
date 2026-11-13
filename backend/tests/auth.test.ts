@@ -1,3 +1,4 @@
+/// <reference types="jest" />
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import { createApp } from '../src/app';
@@ -30,7 +31,7 @@ describe('Authentication & Role-Based Authorization', () => {
   // 2. Successful Member Login
   it('POST /api/auth/login - Member Login with valid credentials', async () => {
     const res = await request(app).post('/api/auth/login').send({
-      email: 'alice@snackoverflow.com',
+      email: 'priya@snackoverflow.com',
       password: 'Member@123',
     });
 
@@ -67,12 +68,13 @@ describe('Authentication & Role-Based Authorization', () => {
     expect(res.body.error).toHaveProperty('code', 'INVALID_CREDENTIALS');
   });
 
-  // 5. Successful Member Signup
-  it('POST /api/auth/signup - should register new MEMBER account', async () => {
+  // 5. Successful Member Signup & Password Hashing Verification
+  it('POST /api/auth/signup - should register new MEMBER account with bcrypt-hashed password', async () => {
+    const plainPassword = 'SecurePassword123!';
     const res = await request(app).post('/api/auth/signup').send({
       name: 'Test New Member',
       email: testMemberEmail,
-      password: 'SecurePassword123!',
+      password: plainPassword,
     });
 
     expect(res.status).toBe(201);
@@ -81,6 +83,12 @@ describe('Authentication & Role-Based Authorization', () => {
     expect(res.body.data.user).toHaveProperty('email', testMemberEmail);
     expect(res.body.data.user).not.toHaveProperty('password');
     expect(res.body.data).toHaveProperty('token');
+
+    // Verify directly in PostgreSQL: password MUST be hashed with bcrypt, never plaintext
+    const dbUser = await prisma.user.findUnique({ where: { email: testMemberEmail } });
+    expect(dbUser).not.toBeNull();
+    expect(dbUser?.password).not.toBe(plainPassword);
+    expect(dbUser?.password).toMatch(/^\$2[ab]\$\d{2}\$/);
   });
 
   // 6. Duplicate Email Registration

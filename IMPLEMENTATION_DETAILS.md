@@ -354,24 +354,26 @@ When multiple users attempt to consume the last remaining stock items simultaneo
 
 ---
 
-## 7. Automated Test Suite & Concurrency Verification
+## 7. Automated Test Suite & Correctness Verification
 
-All 56 automated tests pass cleanly across 6 test suites:
+All 70 automated tests pass cleanly across 8 test suites:
 
 ```text
+PASS tests/databaseCorrectness.test.ts
+PASS tests/votingCorrectness.test.ts
 PASS tests/concurrency.test.ts
 PASS tests/auth.test.ts
-PASS tests/snacks.test.ts
 PASS tests/snackCrud.test.ts
+PASS tests/snacks.test.ts
 PASS tests/health.test.ts
 PASS tests/snackStatus.test.ts
 
-Test Suites: 6 passed, 6 total
-Tests:       56 passed, 56 total
+Test Suites: 8 passed, 8 total
+Tests:       70 passed, 70 total
 Snapshots:   0 total
 ```
 
-### Specific Concurrency Test Verification (`tests/concurrency.test.ts`):
+### 1. Concurrency Test Verification (`tests/concurrency.test.ts`):
 1. **Simulation Setup:** Creates a snack with initial `quantity = 3`.
 2. **Concurrent Execution:** Dispatches 10 parallel HTTP requests simultaneously via `Promise.all`:
    ```typescript
@@ -392,3 +394,15 @@ Snapshots:   0 total
    - Subsequent consume attempt when stock is 0 immediately returns `409 Conflict`.
    - Restocking by Admin safely increments stock and creates an audit record within the same transaction.
    - Restocking attempt by unprivileged Member is rejected with `403 Forbidden`.
+
+### 2. Voting Correctness Verification (`tests/votingCorrectness.test.ts`):
+- One user cannot vote twice for the same snack (`409 Conflict` on duplicate vote attempt; PostgreSQL composite unique constraint `@@unique([userId, snackId])` enforces this at the storage level).
+- Different users can vote for the same snack (independent votes coexist in database, incrementing `voteCount`).
+- Users can remove their own votes (via `DELETE /snacks/:id/vote`, `POST /snacks/:id/vote` toggle, or `DELETE /votes/:id`).
+- Users cannot remove another user's vote (attempting to delete another user's vote by ID or spoof target ID returns `403 Forbidden`).
+
+### 3. Database Integrity & Constraints Verification (`tests/databaseCorrectness.test.ts`):
+- **Unique constraints:** Enforced on `users(email)`, `snacks(name)`, and `votes(userId, snackId)`.
+- **Foreign keys:** Cascade deletion on votes when snack is deleted; Restrict deletion on activities; non-existent user or snack IDs rejected.
+- **Check constraints:** Storage-level PostgreSQL `CHECK (quantity >= 0)` and `CHECK (amount > 0)` reject invalid data even when bypassing application logic.
+- **Index verification:** Verified system catalog `pg_indexes` for all primary, foreign key, and filter indexes.

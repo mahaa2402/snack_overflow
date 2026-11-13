@@ -9,18 +9,19 @@ import { useNavigate } from 'react-router-dom';
 interface SnackCardProps {
   snack: SnackItem;
   onVoteToggle: (snackId: string) => Promise<void>;
-  onConsume: (snackId: string) => Promise<void>;
+  onConsume: (snack: SnackItem) => void;
+  dark?: boolean;
 }
 
 export const SnackCard: React.FC<SnackCardProps> = ({
   snack,
   onVoteToggle,
   onConsume,
+  dark = false,
 }) => {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [isVoting, setIsVoting] = useState(false);
-  const [isConsuming, setIsConsuming] = useState(false);
 
   const imageUrl = getSnackImageUrl(snack.name, snack.category);
   const emoji = getCategoryEmoji(snack.category);
@@ -51,35 +52,48 @@ export const SnackCard: React.FC<SnackCardProps> = ({
     }
   };
 
-  const handleConsumeClick = async () => {
+  const handleConsumeClick = () => {
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
     if (snack.quantity <= 0) return;
-    setIsConsuming(true);
-    try {
-      await onConsume(snack.id);
-    } finally {
-      setIsConsuming(false);
-    }
+    onConsume(snack);
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200/80 shadow-xs hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col group">
+    <div
+      className={
+        dark
+          ? 'bg-slate-900/80 backdrop-blur-xl border border-slate-800/90 hover:border-orange-500/50 shadow-xl shadow-black/50 hover:shadow-2xl hover:shadow-orange-500/10 hover:-translate-y-1.5 transition-all duration-300 ease-out rounded-2xl overflow-hidden flex flex-col group relative'
+          : 'bg-white rounded-xl border border-gray-200/80 shadow-xs hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col group'
+      }
+    >
       {/* Product Image Header */}
-      <div className="relative h-44 w-full bg-gray-100 overflow-hidden">
+      <div className={`relative h-44 w-full overflow-hidden ${dark ? 'bg-slate-950' : 'bg-gray-100'}`}>
         <img
           src={imageUrl}
           alt={snack.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
           loading="lazy"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+        <div
+          className={`absolute inset-0 pointer-events-none ${
+            dark
+              ? 'bg-gradient-to-t from-slate-950 via-slate-950/30 to-transparent'
+              : 'bg-gradient-to-t from-black/40 via-transparent to-transparent'
+          }`}
+        />
 
         {/* Top Floating Badges */}
         <div className="absolute top-3 left-3 flex items-center space-x-1.5">
-          <span className="bg-white/95 backdrop-blur-xs text-xs font-semibold px-2.5 py-1 rounded-full shadow-2xs text-gray-800 flex items-center space-x-1">
+          <span
+            className={
+              dark
+                ? 'bg-slate-950/85 backdrop-blur-md text-xs font-semibold px-2.5 py-1 rounded-full shadow-md text-slate-200 border border-slate-700/60 flex items-center space-x-1'
+                : 'bg-white/95 backdrop-blur-xs text-xs font-semibold px-2.5 py-1 rounded-full shadow-2xs text-gray-800 flex items-center space-x-1'
+            }
+          >
             <span>{emoji}</span>
             <span className="text-[11px] tracking-wide">{snack.category.replace('_', ' ')}</span>
           </span>
@@ -103,26 +117,31 @@ export const SnackCard: React.FC<SnackCardProps> = ({
       {/* Body Info */}
       <div className="p-4 flex-1 flex flex-col justify-between">
         <div>
-          <h3 className="font-bold text-gray-900 text-base leading-snug line-clamp-1" title={snack.name}>
+          <h3
+            className={`font-bold text-base leading-snug line-clamp-1 transition-colors ${
+              dark ? 'text-white group-hover:text-orange-400' : 'text-gray-900'
+            }`}
+            title={snack.name}
+          >
             {snack.name}
           </h3>
 
           {/* Quantity Progress Indicator */}
           <div className="mt-3">
-            <div className="flex justify-between text-xs text-gray-500 mb-1">
+            <div className={`flex justify-between text-xs mb-1 ${dark ? 'text-slate-400' : 'text-gray-500'}`}>
               <span>Availability</span>
-              <span className="font-medium text-gray-700">
+              <span className={`font-medium ${dark ? 'text-slate-200' : 'text-gray-700'}`}>
                 {snack.quantity > 0 ? `${snack.quantity} left` : 'Depleted'}
               </span>
             </div>
-            <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+            <div className={`w-full rounded-full h-1.5 overflow-hidden ${dark ? 'bg-slate-800' : 'bg-gray-100'}`}>
               <div
                 className={`h-full rounded-full transition-all duration-300 ${
                   snack.status === 'STOCKED'
-                    ? 'bg-emerald-500'
+                    ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]'
                     : snack.status === 'RUNNING_LOW'
-                    ? 'bg-amber-500'
-                    : 'bg-rose-400'
+                    ? 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]'
+                    : 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]'
                 }`}
                 style={{
                   width: `${Math.min(100, (snack.quantity / Math.max(15, snack.lowStockThreshold * 2)) * 100)}%`,
@@ -133,14 +152,18 @@ export const SnackCard: React.FC<SnackCardProps> = ({
         </div>
 
         {/* Card Actions */}
-        <div className="mt-5 pt-3 border-t border-gray-100 flex items-center justify-between gap-2">
+        <div className={`mt-5 pt-3 border-t flex items-center justify-between gap-2 ${dark ? 'border-slate-800' : 'border-gray-100'}`}>
           {/* Vote Button */}
           <button
             type="button"
             onClick={handleVoteClick}
             disabled={isVoting}
-            className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
-              snack.hasVoted
+            className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border active:scale-95 ${
+              dark
+                ? snack.hasVoted
+                  ? 'bg-orange-500/20 border-orange-500/50 text-orange-400 shadow-sm'
+                  : 'bg-slate-800/80 border-slate-700/80 text-slate-300 hover:bg-slate-700 hover:text-white hover:border-slate-600'
+                : snack.hasVoted
                 ? 'bg-orange-50 border-orange-300 text-orange-600 shadow-2xs'
                 : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900'
             }`}
@@ -151,19 +174,32 @@ export const SnackCard: React.FC<SnackCardProps> = ({
           </button>
 
           {/* Consume Button */}
-          <Button
-            size="sm"
-            variant={snack.quantity > 0 ? 'primary' : 'outline'}
-            disabled={snack.quantity <= 0 || isConsuming}
-            isLoading={isConsuming}
-            onClick={handleConsumeClick}
-            className={`text-xs px-3.5 py-1.5 ${snack.quantity <= 0 ? 'opacity-40 cursor-not-allowed' : ''}`}
-          >
-            {snack.quantity > 0 ? 'Grab Snack' : 'Out of Stock'}
-          </Button>
+          {dark ? (
+            <button
+              type="button"
+              disabled={snack.quantity <= 0}
+              onClick={handleConsumeClick}
+              className={`text-xs px-3.5 py-1.5 rounded-lg font-semibold transition-all duration-200 shadow-sm ${
+                snack.quantity > 0
+                  ? 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-orange-500/25 hover:shadow-orange-500/40 hover:-translate-y-0.5 active:scale-95'
+                  : 'border border-slate-800 bg-slate-800/40 text-slate-500 cursor-not-allowed'
+              }`}
+            >
+              {snack.quantity > 0 ? 'Grab Snack' : 'Out of Stock'}
+            </button>
+          ) : (
+            <Button
+              size="sm"
+              variant={snack.quantity > 0 ? 'primary' : 'outline'}
+              disabled={snack.quantity <= 0}
+              onClick={handleConsumeClick}
+              className={`text-xs px-3.5 py-1.5 ${snack.quantity <= 0 ? 'opacity-40 cursor-not-allowed' : ''}`}
+            >
+              {snack.quantity > 0 ? 'Grab Snack' : 'Out of Stock'}
+            </Button>
+          )}
         </div>
       </div>
     </div>
   );
 };
-

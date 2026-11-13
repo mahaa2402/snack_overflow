@@ -11,3 +11,227 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.my-pantry-dark [class*="bg-white"] {
+  background-color: #111827 !important;
+}
+
+.my-pantry .pantry-card:hover {
+  border-color: rgb(249 115 22 / 75%);
+  box-shadow: 0 0 0 2px rgb(249 115 22 / 22%), 0 12px 30px rgb(249 115 22 / 18%);
+}
+
+.my-pantry-dark .pantry-card:hover {
+  border-color: rgb(249 115 22 / 75%) !important;
+  box-shadow: 0 0 0 2px rgb(249 115 22 / 30%), 0 14px 34px rgb(249 115 22 / 24%) !important;
+}
+
+.my-pantry-dark [class*="bg-gradient-to-r"] {
+  background-image: linear-gradient(to right, #2b211b, #111827) !important;
+}
+
+.my-pantry-dark [class*="bg-slate-50"],
+.my-pantry-dark [class*="bg-slate-100"] {
+  background-color: #1e293b !important;
+}
+
+.my-pantry-dark [class*="bg-orange-50"],
+.my-pantry-dark [class*="bg-orange-100"],
+.my-pantry-dark [class*="bg-amber-50"],
+.my-pantry-dark [class*="bg-amber-100"] {
+  background-color: rgb(249 115 22 / 14%) !important;
+}
+
+.my-pantry-dark [class*="text-slate-950"],
+.my-pantry-dark [class*="text-slate-900"],
+.my-pantry-dark [class*="text-slate-800"],
+.my-pantry-dark [class*="text-slate-700"] {
+  color: #e2e8f0 !important;
+}
+
+.my-pantry-dark [class*="text-slate-600"],
+.my-pantry-dark [class*="text-slate-500"],
+.my-pantry-dark [class*="text-slate-400"] {
+  color: #94a3b8 !important;
+}
+
+.my-pantry-dark [class*="text-orange-900"],
+.my-pantry-dark [class*="text-orange-700"],
+.my-pantry-dark [class*="text-orange-600"],
+.my-pantry-dark [class*="text-amber-700"] {
+  color: #fdba74 !important;
+}
+
+.my-pantry-dark [class*="border-slate-100"],
+.my-pantry-dark [class*="border-slate-200"],
+.my-pantry-dark [class*="border-orange-100"],
+.my-pantry-dark [class*="border-orange-200"] {
+  border-color: #334155 !important;
+}
+
+.my-pantry-dark [class*="border-white"] {
+  border-color: #111827 !important;
+}
+
+.my-pantry-dark [class*="before:bg-orange-100"]::before {
+  background-color: #7c2d12 !important;
+}
+
+.my-pantry-dark [class*="hover:bg-orange-50"]:hover {
+  background-color: rgb(249 115 22 / 10%) !important;
+}
+
+.admin-shell main [class*="rounded-2xl"][class*="border"],
+.admin-shell main [class*="rounded-3xl"][class*="border"] {
+  transition-property: border-color, box-shadow, background-color, transform;
+  transition-duration: 180ms;
+}
+
+.admin-shell main [class*="rounded-2xl"][class*="border"]:hover,
+.admin-shell main [class*="rounded-3xl"][class*="border"]:hover {
+  border-color: rgb(249 115 22 / 65%) !important;
+  box-shadow: 0 12px 30px rgb(15 23 42 / 8%);
+}
+
+.dark .admin-shell main [class*="rounded-2xl"][class*="border"]:hover,
+.dark .admin-shell main [class*="rounded-3xl"][class*="border"]:hover {
+  box-shadow: 0 12px 32px rgb(0 0 0 / 28%), 0 0 0 1px rgb(249 115 22 / 12%);
+}
+
+.dark .admin-shell main [class*="bg-white"] {
+  background-color: rgb(15 23 42 / 92%) !important;
+}
+
+.dark .admin-shell main [class*="bg-gray-50"],
+.dark .admin-shell main [class*="bg-gray-100"] {
+  background-color: rgb(30 41 59 / 78%) !important;
+}
+
+.dark .admin-shell main [class*="text-gray-900"],
+.dark .admin-shell main [class*="text-gray-800"],
+.dark .admin-shell main [class*="text-gray-700"] {
+  color: #e2e8f0 !important;
+}
+
+.dark .admin-shell main [class*="text-gray-600"],
+.dark .admin-shell main [class*="text-gray-500"] {
+  color: #94a3b8 !important;
+}
+
+.dark .admin-shell main [class*="text-gray-400"] {
+  color: #94a3b8 !important;
+}
+
+.dark .admin-shell main [class*="border-gray-"],
+.dark .admin-shell main [class*="border-blue-"] {
+  border-color: rgb(51 65 85 / 75%) !important;
+}
+
+.admin-shell main .admin-stat-card:nth-child(even) {
+  background-color: #f5f7fa !important;
+}
+
+.dark .admin-shell main .admin-stat-card:nth-child(even) {
+  background-color: #111c2f !important;
+}
+
+.admin-shell main {
+  font-size: 15px;
+}
+
+.admin-shell main [class~="text-xs"] {
+  font-size: 0.875rem !important;
+  line-height: 1.35rem;
+}
+
+.admin-shell main [class~="text-sm"] {
+  font-size: 1rem !important;
+  line-height: 1.5rem;
+}
+
+.admin-shell main [class*="text-[9px]"] {
+  font-size: 0.75rem !important;
+  line-height: 1rem;
+}
+
+.admin-shell main [class*="text-[10px]"] {
+  font-size: 0.8125rem !important;
+  line-height: 1.125rem;
+}
+
+.admin-shell main [class*="text-[11px]"] {
+  font-size: 0.875rem !important;
+  line-height: 1.25rem;
+}
+
+.admin-shell header [class~="text-xs"] {
+  font-size: 0.8125rem !important;
+}
+
+/* ── Fade In Up ─────────────────────────────────────────── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s ease-out both;
+}
+
+/* ── Scale In (modals / dropdowns) ─────────────────────── */
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.animate-scale-in {
+  animation: scaleIn 0.2s ease-out both;
+}
+
+/* ── Slide In From Bottom (toasts) ─────────────────────── */
+@keyframes slideInFromBottom {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-slide-in-bottom {
+  animation: slideInFromBottom 0.25s ease-out both;
+}
+
+/* ── Shimmer (skeleton loaders) ─────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.animate-shimmer {
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* ── Dark Shimmer (dark-mode skeleton loaders) ─────────── */
+@keyframes shimmerDark {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.animate-shimmer-dark {
+  background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+  background-size: 200% 100%;
+  animation: shimmerDark 1.5s infinite;
+}
+
+/* ── Orange Glow Pulse ─────────────────────────────────── */
+@keyframes orangeGlow {
+  0%, 100% { box-shadow: 0 0 15px rgba(249, 115, 22, 0.15); }
+  50%      { box-shadow: 0 0 25px rgba(249, 115, 22, 0.35); }
+}
+.animate-orange-glow {
+  animation: orangeGlow 3s ease-in-out infinite;
+}
+
+/* ── Reduced Motion ─────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

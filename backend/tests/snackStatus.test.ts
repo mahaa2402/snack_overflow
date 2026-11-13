@@ -1,3 +1,4 @@
+/// <reference types="jest" />
 import { deriveSnackStatus, withDerivedStatus } from '../src/utils/snackStatus';
 import { SnackCategory } from '@prisma/client';
 

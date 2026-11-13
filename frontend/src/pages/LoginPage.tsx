@@ -3,24 +3,26 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Card } from '../components/common/Card';
 import { Button } from '../components/common/Button';
-import { Badge } from '../components/common/Badge';
+import { useTheme } from '../context/ThemeContext';
+import { getLoginDestination } from './loginDestination';
 
 export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
 
-  const { login, isAuthenticated, isLoading, error, clearError } = useAuth();
+  const { login, isAuthenticated, isAdmin, isLoading, error, clearError } = useAuth();
+  const { isDark } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/';
+  const requestedPath = (location.state as { from?: { pathname: string } })?.from?.pathname;
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate(from, { replace: true });
+      navigate(getLoginDestination(isAdmin ? 'ADMIN' : 'MEMBER', requestedPath), { replace: true });
     }
-  }, [isAuthenticated, navigate, from]);
+  }, [isAuthenticated, isAdmin, navigate, requestedPath]);
 
   useEffect(() => {
     clearError();
@@ -36,38 +38,43 @@ export const LoginPage: React.FC = () => {
     }
 
     try {
-      await login({ email: email.trim(), password });
-      navigate(from, { replace: true });
+      const signedInUser = await login({ email: email.trim(), password });
+      navigate(getLoginDestination(signedInUser.role, requestedPath), { replace: true });
     } catch {
       // Error handled by AuthContext
     }
   };
 
-  const handleQuickFill = (demoEmail: string, demoPass: string) => {
-    setEmail(demoEmail);
-    setPassword(demoPass);
-    setFormError(null);
-    clearError();
-  };
-
   return (
-    <div className="max-w-md mx-auto py-8">
+    <div className={`mx-auto max-w-md py-8 ${isDark ? 'text-slate-100' : 'text-gray-900'}`}>
       <div className="text-center mb-8">
         <span className="text-4xl">🍿</span>
-        <h1 className="text-2xl font-bold text-gray-900 mt-2">Welcome Back</h1>
-        <p className="text-sm text-gray-500 mt-1">Sign in to your Snack Overflow account</p>
+        <h1 className={`mt-2 text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Welcome Back</h1>
+        <p className={`mt-1 text-sm ${isDark ? 'text-slate-300' : 'text-gray-500'}`}>
+          Sign in to your Snack Overflow account
+        </p>
       </div>
 
-      <Card>
+      <Card
+        className={
+          isDark
+            ? '!border-slate-700 !bg-slate-900 !text-slate-100 shadow-xl shadow-black/20'
+            : ''
+        }
+      >
         <form onSubmit={handleSubmit} className="space-y-4">
           {(formError || error) && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+            <div className={`rounded-lg border p-3 text-sm ${
+              isDark
+                ? 'border-red-900/70 bg-red-950/50 text-red-200'
+                : 'border-red-200 bg-red-50 text-red-700'
+            }`}>
               {formError || error}
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className={`mb-1 block text-sm font-medium ${isDark ? 'text-slate-200' : 'text-gray-700'}`}>
               Email Address
             </label>
             <input
@@ -75,13 +82,17 @@ export const LoginPage: React.FC = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@snackoverflow.com"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm"
+              className={`w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                isDark
+                  ? 'border-slate-600 bg-slate-800 text-white placeholder:text-slate-400'
+                  : 'border-gray-300 bg-white text-gray-900'
+              }`}
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className={`mb-1 block text-sm font-medium ${isDark ? 'text-slate-200' : 'text-gray-700'}`}>
               Password
             </label>
             <input
@@ -89,7 +100,11 @@ export const LoginPage: React.FC = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm"
+              className={`w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                isDark
+                  ? 'border-slate-600 bg-slate-800 text-white placeholder:text-slate-400'
+                  : 'border-gray-300 bg-white text-gray-900'
+              }`}
               required
             />
           </div>
@@ -99,7 +114,9 @@ export const LoginPage: React.FC = () => {
           </Button>
         </form>
 
-        <div className="mt-6 pt-6 border-t border-gray-100 text-center text-sm text-gray-500">
+        <div className={`mt-6 border-t pt-6 text-center text-sm ${
+          isDark ? 'border-slate-700 text-slate-300' : 'border-gray-100 text-gray-500'
+        }`}>
           Don't have an account?{' '}
           <Link to="/signup" className="text-orange-600 font-medium hover:underline">
             Register as a Member
@@ -107,74 +124,6 @@ export const LoginPage: React.FC = () => {
         </div>
       </Card>
 
-      {/* Quick Fill Demo Accounts Panel */}
-      <div className="mt-6 p-4 bg-orange-50 border border-orange-100 rounded-xl text-xs space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="font-semibold text-orange-950 uppercase tracking-wider">
-            Demo Credentials (Quick-Fill)
-          </span>
-          <Badge variant="warning">Seeded Users</Badge>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={() => handleQuickFill('admin@snackoverflow.com', 'Admin@123')}
-            className="p-2 text-left bg-white border border-orange-200 rounded-lg hover:border-orange-500 transition-colors shadow-2xs"
-          >
-            <div className="font-medium text-gray-900 flex items-center justify-between">
-              <span>Admin</span>
-              <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-mono">
-                ADMIN
-              </span>
-            </div>
-            <div className="text-gray-500 truncate text-[11px]">admin@snackoverflow.com</div>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleQuickFill('alice@snackoverflow.com', 'Member@123')}
-            className="p-2 text-left bg-white border border-orange-200 rounded-lg hover:border-orange-500 transition-colors shadow-2xs"
-          >
-            <div className="font-medium text-gray-900 flex items-center justify-between">
-              <span>Alice</span>
-              <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-mono">
-                MEMBER
-              </span>
-            </div>
-            <div className="text-gray-500 truncate text-[11px]">alice@snackoverflow.com</div>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleQuickFill('bob@snackoverflow.com', 'Member@123')}
-            className="p-2 text-left bg-white border border-orange-200 rounded-lg hover:border-orange-500 transition-colors shadow-2xs"
-          >
-            <div className="font-medium text-gray-900 flex items-center justify-between">
-              <span>Bob</span>
-              <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-mono">
-                MEMBER
-              </span>
-            </div>
-            <div className="text-gray-500 truncate text-[11px]">bob@snackoverflow.com</div>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleQuickFill('charlie@snackoverflow.com', 'Member@123')}
-            className="p-2 text-left bg-white border border-orange-200 rounded-lg hover:border-orange-500 transition-colors shadow-2xs"
-          >
-            <div className="font-medium text-gray-900 flex items-center justify-between">
-              <span>Charlie</span>
-              <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-mono">
-                MEMBER
-              </span>
-            </div>
-            <div className="text-gray-500 truncate text-[11px]">charlie@snackoverflow.com</div>
-          </button>
-        </div>
-      </div>
     </div>
   );
 };
-

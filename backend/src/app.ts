@@ -5,6 +5,10 @@ import { config } from './config/env';
 import apiRoutes from './routes';
 import authRoutes from './routes/auth.routes';
 import snackRoutes from './routes/snack.routes';
+import voteRoutes from './routes/vote.routes';
+import activityRoutes from './routes/activity.routes';
+import restockRoutes from './routes/restock.routes';
+import alertRoutes from './routes/alert.routes';
 import { requestLogger } from './middlewares/requestLogger';
 import { notFoundHandler } from './middlewares/notFoundHandler';
 import { errorHandler } from './middlewares/errorHandler';
@@ -36,6 +40,8 @@ export const createApp = (): Application => {
         health: '/api/health',
         auth: '/api/auth',
         snacks: '/api/snacks',
+        votes: '/api/votes',
+        activities: '/api/activities',
         admin: '/api/admin',
       },
     });
@@ -44,6 +50,10 @@ export const createApp = (): Application => {
   // Top-level direct routes
   app.use('/auth', authRoutes);
   app.use('/snacks', snackRoutes);
+  app.use('/votes', voteRoutes);
+  app.use('/activities', activityRoutes);
+  app.use('/restock', restockRoutes);
+  app.use('/alerts', alertRoutes);
 
   // Central API routes under /api
   app.use('/api', apiRoutes);

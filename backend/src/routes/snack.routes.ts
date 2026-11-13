@@ -9,7 +9,7 @@ router.get('/', optionalAuthenticate, snackController.getSnacks);
 router.get('/stats', snackController.getPantryStats);
 router.get('/popular', optionalAuthenticate, snackController.getPopularSnacks);
 router.get('/featured', optionalAuthenticate, snackController.getFeaturedSnack);
-router.get('/activities', snackController.getActivities);
+router.get('/activities', authenticate, requireAdmin, snackController.getActivities);
 router.get('/:id', optionalAuthenticate, snackController.getSnackById);
 
 // Admin-only operations
@@ -22,5 +22,6 @@ router.post('/:id/restock', authenticate, requireAdmin, snackController.restockS
 // Member actions
 router.post('/:id/consume', authenticate, snackController.consumeSnack);
 router.post('/:id/vote', authenticate, snackController.toggleVote);
+router.delete('/:id/vote', authenticate, snackController.removeVote);
 
 export default router;

@@ -134,16 +134,47 @@ export class SnackController {
 
   /**
    * POST /snacks/:id/vote
-   * Member/Admin action: Toggle vote
+   * Member/Admin action: Vote or Toggle vote
    */
   public toggleVote = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
-      const result = await snackService.toggleVote(id, req.user!.userId);
+      const action = req.body?.action as 'vote' | 'unvote' | 'toggle' | undefined;
+      const result = await snackService.toggleVote(id, req.user!.userId, action);
       const message = result.hasVoted
         ? 'Vote recorded! Thank you for voting.'
         : 'Vote removed successfully.';
       sendSuccess(res, result, message, 200);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * DELETE /snacks/:id/vote
+   * Member/Admin action: Remove own vote for a snack
+   */
+  public removeVote = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const targetUserId = (req.body?.userId || req.query?.userId) as string | undefined;
+      const result = await snackService.removeVoteBySnack(id, req.user!.userId, targetUserId);
+      sendSuccess(res, result, 'Vote removed successfully.', 200);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * DELETE /votes/:id
+   * Member/Admin action: Delete vote by vote ID
+   * Users can only delete their own vote. Cross-user deletion returns 403 Forbidden.
+   */
+  public deleteVoteById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const result = await snackService.deleteVoteById(id, req.user!.userId);
+      sendSuccess(res, result, 'Vote removed successfully.', 200);
     } catch (error) {
       next(error);
     }
@@ -191,9 +222,41 @@ export class SnackController {
    */
   public getActivities = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const limit = req.query.limit ? Number(req.query.limit) : 10;
-      const activities = await snackService.getRecentActivities(limit);
+      const limit = req.query.limit ? Number(req.query.limit) : 20;
+      const action = req.query.action as string | undefined;
+      const activities = await snackService.getRecentActivities(limit, action);
       sendSuccess(res, activities, 'Recent activities retrieved', 200);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * GET /activities/me
+   * Returns only the authenticated user's snack grabs.
+   */
+  public getMyActivities = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const limit = req.query.limit ? Number(req.query.limit) : 50;
+      const activities = await snackService.getRecentActivities(limit, 'CONSUMED', req.user!.userId);
+      sendSuccess(res, activities, 'Your snack grab history retrieved successfully', 200);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * GET /activities/me/dashboard
+   * Returns personal pantry metrics, trends, favourites, and timeline.
+   */
+  public getMyPantryDashboard = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const dashboard = await snackService.getMyPantryDashboard(req.user!.userId);
+      sendSuccess(res, dashboard, 'Your pantry dashboard retrieved successfully', 200);
     } catch (error) {
       next(error);
     }

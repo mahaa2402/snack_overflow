@@ -9,7 +9,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isLoading: boolean;
   error: string | null;
-  login: (credentials: LoginCredentials) => Promise<void>;
+  login: (credentials: LoginCredentials) => Promise<User>;
   signup: (credentials: SignupCredentials) => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
@@ -44,7 +44,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initializeAuth();
   }, []);
 
-  const login = useCallback(async (credentials: LoginCredentials) => {
+  const login = useCallback(async (credentials: LoginCredentials): Promise<User> => {
     setIsLoading(true);
     setError(null);
     try {
@@ -52,6 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(response.user);
       setToken(response.token);
       sessionStorage.setItem('token', response.token);
+      return response.user;
     } catch (err: unknown) {
       const message =
         typeof err === 'object' && err !== null && 'message' in err
@@ -133,4 +134,3 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
-

@@ -24,6 +24,11 @@ export const authenticate = (req: Request, _res: Response, next: NextFunction): 
     }
   }
 
+  // 3. Fallback to query parameter (e.g. for EventSource / SSE connections)
+  if (!token && req.query && typeof req.query.token === 'string') {
+    token = req.query.token;
+  }
+
   if (!token) {
     throw new AppError('Authentication required. Missing token.', 401, 'UNAUTHORIZED');
   }

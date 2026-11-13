@@ -29,22 +29,22 @@ async function main() {
   console.log(`✓ Admin user: ${admin.email}`);
 
   // 2. Seed MEMBER accounts
-  const alice = await prisma.user.upsert({
-    where: { email: 'alice@snackoverflow.com' },
-    update: { role: Role.MEMBER, password: memberPasswordHash, name: 'Alice Chen' },
-    create: { email: 'alice@snackoverflow.com', name: 'Alice Chen', password: memberPasswordHash, role: Role.MEMBER },
+  const priya = await prisma.user.upsert({
+    where: { email: 'priya@snackoverflow.com' },
+    update: { role: Role.MEMBER, password: memberPasswordHash, name: 'Priya' },
+    create: { email: 'priya@snackoverflow.com', name: 'Priya', password: memberPasswordHash, role: Role.MEMBER },
   });
 
-  const bob = await prisma.user.upsert({
-    where: { email: 'bob@snackoverflow.com' },
-    update: { role: Role.MEMBER, password: memberPasswordHash, name: 'Bob Miller' },
-    create: { email: 'bob@snackoverflow.com', name: 'Bob Miller', password: memberPasswordHash, role: Role.MEMBER },
+  const rekha = await prisma.user.upsert({
+    where: { email: 'rekha@snackoverflow.com' },
+    update: { role: Role.MEMBER, password: memberPasswordHash, name: 'Rekha' },
+    create: { email: 'rekha@snackoverflow.com', name: 'Rekha', password: memberPasswordHash, role: Role.MEMBER },
   });
 
-  const charlie = await prisma.user.upsert({
-    where: { email: 'charlie@snackoverflow.com' },
-    update: { role: Role.MEMBER, password: memberPasswordHash, name: 'Charlie Davis' },
-    create: { email: 'charlie@snackoverflow.com', name: 'Charlie Davis', password: memberPasswordHash, role: Role.MEMBER },
+  const karthik = await prisma.user.upsert({
+    where: { email: 'karthik@snackoverflow.com' },
+    update: { role: Role.MEMBER, password: memberPasswordHash, name: 'Karthik' },
+    create: { email: 'karthik@snackoverflow.com', name: 'Karthik', password: memberPasswordHash, role: Role.MEMBER },
   });
   console.log('✓ Member users seeded');
 
@@ -96,82 +96,109 @@ async function main() {
   if (coldBrew) {
     // 3 votes for Cold Brew (Top snack of the week!)
     await prisma.vote.upsert({
-      where: { userId_snackId: { userId: alice.id, snackId: coldBrew.id } },
+      where: { userId_snackId: { userId: priya.id, snackId: coldBrew.id } },
       update: {},
-      create: { userId: alice.id, snackId: coldBrew.id },
+      create: { userId: priya.id, snackId: coldBrew.id },
     });
     await prisma.vote.upsert({
-      where: { userId_snackId: { userId: bob.id, snackId: coldBrew.id } },
+      where: { userId_snackId: { userId: rekha.id, snackId: coldBrew.id } },
       update: {},
-      create: { userId: bob.id, snackId: coldBrew.id },
+      create: { userId: rekha.id, snackId: coldBrew.id },
     });
     await prisma.vote.upsert({
-      where: { userId_snackId: { userId: charlie.id, snackId: coldBrew.id } },
+      where: { userId_snackId: { userId: karthik.id, snackId: coldBrew.id } },
       update: {},
-      create: { userId: charlie.id, snackId: coldBrew.id },
+      create: { userId: karthik.id, snackId: coldBrew.id },
     });
   }
 
   if (darkChocolate) {
     await prisma.vote.upsert({
-      where: { userId_snackId: { userId: alice.id, snackId: darkChocolate.id } },
+      where: { userId_snackId: { userId: priya.id, snackId: darkChocolate.id } },
       update: {},
-      create: { userId: alice.id, snackId: darkChocolate.id },
+      create: { userId: priya.id, snackId: darkChocolate.id },
     });
     await prisma.vote.upsert({
-      where: { userId_snackId: { userId: bob.id, snackId: darkChocolate.id } },
+      where: { userId_snackId: { userId: rekha.id, snackId: darkChocolate.id } },
       update: {},
-      create: { userId: bob.id, snackId: darkChocolate.id },
+      create: { userId: rekha.id, snackId: darkChocolate.id },
     });
   }
 
   if (kettleChips) {
     await prisma.vote.upsert({
-      where: { userId_snackId: { userId: charlie.id, snackId: kettleChips.id } },
+      where: { userId_snackId: { userId: karthik.id, snackId: kettleChips.id } },
       update: {},
-      create: { userId: charlie.id, snackId: kettleChips.id },
+      create: { userId: karthik.id, snackId: kettleChips.id },
     });
   }
 
   if (granolaBar) {
     await prisma.vote.upsert({
-      where: { userId_snackId: { userId: alice.id, snackId: granolaBar.id } },
+      where: { userId_snackId: { userId: priya.id, snackId: granolaBar.id } },
       update: {},
-      create: { userId: alice.id, snackId: granolaBar.id },
+      create: { userId: priya.id, snackId: granolaBar.id },
     });
   }
   console.log('✓ Seeded initial user votes');
 
-  // 5. Seed Activities (restocks & consumes)
-  if (coldBrew && darkChocolate) {
-    await prisma.activity.create({
-      data: {
-        userId: admin.id,
-        snackId: coldBrew.id,
-        action: ActivityAction.RESTOCKED,
-        amount: 24,
-      },
-    });
+  // 5. Seed Activities (Historical restocks & consumes for dynamic trend analysis)
+  const now = new Date();
+  const dayMs = 24 * 60 * 60 * 1000;
 
-    await prisma.activity.create({
-      data: {
-        userId: alice.id,
-        snackId: coldBrew.id,
-        action: ActivityAction.CONSUMED,
-        amount: 1,
-      },
-    });
+  const sampleActivities = [
+    // 6 days ago
+    { user: admin, snack: coldBrew, action: ActivityAction.RESTOCKED, amount: 30, daysAgo: 6 },
+    { user: priya, snack: coldBrew, action: ActivityAction.CONSUMED, amount: 2, daysAgo: 6 },
+    { user: rekha, snack: darkChocolate, action: ActivityAction.CONSUMED, amount: 1, daysAgo: 6 },
+    { user: karthik, snack: kettleChips, action: ActivityAction.CONSUMED, amount: 2, daysAgo: 6 },
 
-    await prisma.activity.create({
-      data: {
-        userId: bob.id,
-        snackId: darkChocolate.id,
-        action: ActivityAction.CONSUMED,
-        amount: 1,
-      },
-    });
+    // 5 days ago
+    { user: priya, snack: granolaBar, action: ActivityAction.CONSUMED, amount: 1, daysAgo: 5 },
+    { user: rekha, snack: coldBrew, action: ActivityAction.CONSUMED, amount: 2, daysAgo: 5 },
+    { user: karthik, snack: darkChocolate, action: ActivityAction.CONSUMED, amount: 1, daysAgo: 5 },
+
+    // 4 days ago
+    { user: admin, snack: kettleChips, action: ActivityAction.RESTOCKED, amount: 25, daysAgo: 4 },
+    { user: priya, snack: kettleChips, action: ActivityAction.CONSUMED, amount: 3, daysAgo: 4 },
+    { user: rekha, snack: granolaBar, action: ActivityAction.CONSUMED, amount: 2, daysAgo: 4 },
+    { user: karthik, snack: coldBrew, action: ActivityAction.CONSUMED, amount: 1, daysAgo: 4 },
+
+    // 3 days ago
+    { user: priya, snack: darkChocolate, action: ActivityAction.CONSUMED, amount: 2, daysAgo: 3 },
+    { user: rekha, snack: kettleChips, action: ActivityAction.CONSUMED, amount: 2, daysAgo: 3 },
+    { user: karthik, snack: granolaBar, action: ActivityAction.CONSUMED, amount: 1, daysAgo: 3 },
+
+    // 2 days ago
+    { user: priya, snack: coldBrew, action: ActivityAction.CONSUMED, amount: 3, daysAgo: 2 },
+    { user: rekha, snack: darkChocolate, action: ActivityAction.CONSUMED, amount: 2, daysAgo: 2 },
+    { user: karthik, snack: kettleChips, action: ActivityAction.CONSUMED, amount: 1, daysAgo: 2 },
+
+    // 1 day ago
+    { user: admin, snack: darkChocolate, action: ActivityAction.RESTOCKED, amount: 20, daysAgo: 1 },
+    { user: priya, snack: kettleChips, action: ActivityAction.CONSUMED, amount: 2, daysAgo: 1 },
+    { user: rekha, snack: coldBrew, action: ActivityAction.CONSUMED, amount: 2, daysAgo: 1 },
+
+    // Today
+    { user: karthik, snack: coldBrew, action: ActivityAction.CONSUMED, amount: 2, daysAgo: 0 },
+    { user: priya, snack: darkChocolate, action: ActivityAction.CONSUMED, amount: 1, daysAgo: 0 },
+    { user: rekha, snack: granolaBar, action: ActivityAction.CONSUMED, amount: 1, daysAgo: 0 },
+  ];
+
+  for (const item of sampleActivities) {
+    if (item.snack && item.user) {
+      await prisma.activity.create({
+        data: {
+          userId: item.user.id,
+          snackId: item.snack.id,
+          action: item.action,
+          amount: item.amount,
+          createdAt: new Date(now.getTime() - item.daysAgo * dayMs - Math.random() * 3600000),
+        },
+      });
+    }
   }
-  console.log('✓ Seeded initial pantry activities');
+  console.log(`✓ Seeded ${sampleActivities.length} realistic historical pantry activities`);
 
   console.log('✅ Seeding completed successfully!');
 }

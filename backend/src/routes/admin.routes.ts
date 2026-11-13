@@ -84,4 +84,18 @@ router.post('/snacks/:id/restock', snackController.restockSnack);
  */
 router.get('/activities', snackController.getActivities);
 
+/**
+ * GET /api/admin/insights
+ * Feature 2 & 3: Pantry Analytics, Consumption Trends, and Smart Restock Recommendations
+ * Admin only.
+ */
+router.get('/insights', async (_req, res, next) => {
+  try {
+    const insights = await snackService.getPantryInsights();
+    sendSuccess(res, insights, 'Pantry insights & analytics retrieved successfully', 200);
+  } catch (error) {
+    next(error);
+  }
+});
+
 export default router;

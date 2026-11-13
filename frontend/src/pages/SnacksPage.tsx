@@ -1,10 +1,14 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { PaginatedSnacks } from '../types/snack';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { PaginatedSnacks, SnackItem } from '../types/snack';
 import { getSnacksApi, toggleVoteApi, consumeSnackApi } from '../api/snack.api';
 import { SnackCard } from '../components/snacks/SnackCard';
+import { GrabSnackModal } from '../components/snacks/GrabSnackModal';
+import { ActionToast } from '../components/common/ActionToast';
 import { Button } from '../components/common/Button';
+import { useTheme } from '../context/ThemeContext';
 
 export const SnacksPage: React.FC = () => {
+  const { isDark } = useTheme();
   const [data, setData] = useState<PaginatedSnacks | null>(null);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<string>('ALL');
@@ -13,6 +17,22 @@ export const SnacksPage: React.FC = () => {
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastVariant, setToastVariant] = useState<'success' | 'error'>('success');
+  const [snackToGrab, setSnackToGrab] = useState<SnackItem | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showMessage = useCallback((message: string, variant: 'success' | 'error' = 'success') => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToastMessage(message);
+    setToastVariant(variant);
+    toastTimer.current = setTimeout(() => setToastMessage(null), 3000);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+    };
+  }, []);
 
   const fetchSnacks = useCallback(async () => {
     setIsLoading(true);
@@ -57,8 +77,7 @@ export const SnacksPage: React.FC = () => {
   const handleVoteToggle = async (snackId: string) => {
     try {
       const result = await toggleVoteApi(snackId);
-      setToastMessage(result.hasVoted ? 'Vote recorded!' : 'Vote removed.');
-      setTimeout(() => setToastMessage(null), 3000);
+      showMessage(result.hasVoted ? 'Your vote has been counted!' : 'Your vote has been removed.');
 
       // Re-fetch to update vote state
       await fetchSnacks();
@@ -67,24 +86,20 @@ export const SnacksPage: React.FC = () => {
         typeof err === 'object' && err !== null && 'message' in err
           ? String((err as { message: unknown }).message)
           : 'Failed to toggle vote';
-      setToastMessage(msg);
+      showMessage(msg, 'error');
     }
   };
 
-  const handleConsume = async (snackId: string) => {
-    try {
-      await consumeSnackApi(snackId, 1);
-      setToastMessage('Snack consumed! Enjoy.');
-      setTimeout(() => setToastMessage(null), 3000);
+  const handleConsume = async (amount: number) => {
+    if (!snackToGrab) return;
+    const snack = snackToGrab;
+    await consumeSnackApi(snack.id, amount);
+    showMessage(`Grabbed successfully! You took ${amount} ${amount === 1 ? 'item' : 'items'} of ${snack.name}.`);
+    await fetchSnacks();
+  };
 
-      await fetchSnacks();
-    } catch (err: unknown) {
-      const msg =
-        typeof err === 'object' && err !== null && 'message' in err
-          ? String((err as { message: unknown }).message)
-          : 'Failed to consume snack';
-      setToastMessage(msg);
-    }
+  const handleConsumeRequest = (snack: SnackItem) => {
+    setSnackToGrab(snack);
   };
 
   const categories: { label: string; value: string; emoji: string }[] = [
@@ -92,7 +107,7 @@ export const SnacksPage: React.FC = () => {
     { label: 'Sweet', value: 'SWEET', emoji: '🍫' },
     { label: 'Savoury', value: 'SAVOURY', emoji: '🥨' },
     { label: 'Drinks', value: 'DRINK', emoji: '🥤' },
-    { label: 'Healthy-ish', value: 'HEALTHY_ISH', emoji: '🥗' },
+    { label: 'Healthy', value: 'HEALTHY_ISH', emoji: '🥗' },
   ];
 
   const statuses: { label: string; value: string; color: string }[] = [
@@ -104,26 +119,32 @@ export const SnacksPage: React.FC = () => {
 
   return (
     <div className="space-y-8 pb-12">
-      {/* Toast */}
-      {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-gray-900 text-white text-xs font-semibold px-4 py-3 rounded-xl shadow-lg border border-gray-700 flex items-center space-x-2">
-          <span>🍿</span>
-          <span>{toastMessage}</span>
-        </div>
-      )}
+      <ActionToast message={toastMessage} dark={isDark} variant={toastVariant} />
+      <GrabSnackModal
+        snack={snackToGrab}
+        dark={isDark}
+        onClose={() => setSnackToGrab(null)}
+        onConfirm={handleConsume}
+      />
 
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
+        <h1 className={`text-3xl font-extrabold tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
           Pantry Snack Inventory
         </h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Explore office treats, check real-time stock levels, grab a snack, and vote for your favorites.
+        <p className={`text-sm mt-1 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+          Explore snacks, check real-time stock levels, grab a snack, and vote for your favorites.
         </p>
       </div>
 
       {/* Search, Filter & Sort Controls */}
-      <div className="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-xs space-y-4">
+      <div
+        className={`p-5 rounded-2xl border transition-all duration-300 space-y-4 ${
+          isDark
+            ? 'bg-slate-900/60 border-slate-800/90 backdrop-blur-xl shadow-lg'
+            : 'bg-white border-gray-200/80 shadow-xs'
+        }`}
+      >
         {/* Search Bar & Sort Dropdown */}
         <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
           <form onSubmit={handleSearchSubmit} className="relative w-full sm:max-w-md">
@@ -132,9 +153,13 @@ export const SnacksPage: React.FC = () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search snacks by name (e.g. Cold Brew, Chips)..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-orange-500 focus:outline-none"
+              className={`w-full pl-10 pr-4 py-2 border rounded-xl text-sm focus:ring-2 focus:ring-orange-500 focus:outline-none transition-colors ${
+                isDark
+                  ? 'bg-slate-950/60 border-slate-700 text-white placeholder-slate-500'
+                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+              }`}
             />
-            <span className="absolute left-3.5 top-2.5 text-gray-400 text-sm">🔍</span>
+            <span className="absolute left-3.5 top-2.5 text-slate-400 text-sm">🔍</span>
             {search && (
               <button
                 type="button"
@@ -142,7 +167,7 @@ export const SnacksPage: React.FC = () => {
                   setSearch('');
                   setPage(1);
                 }}
-                className="absolute right-3 top-2 text-gray-400 hover:text-gray-600 text-xs"
+                className="absolute right-3 top-2 text-slate-400 hover:text-slate-200 text-xs"
               >
                 Clear
               </button>
@@ -150,22 +175,32 @@ export const SnacksPage: React.FC = () => {
           </form>
 
           <div className="flex items-center space-x-2 w-full sm:w-auto justify-end">
-            <span className="text-xs font-medium text-gray-500 whitespace-nowrap">Sort by:</span>
+            <span className={`text-xs font-medium whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+              Sort by:
+            </span>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as 'votes' | 'name' | 'quantity' | 'createdAt')}
-              className="border border-gray-300 rounded-xl px-3 py-1.5 text-xs font-medium focus:ring-2 focus:ring-orange-500 focus:outline-none bg-white text-gray-800"
+              className={`border rounded-xl px-3 py-1.5 text-xs font-medium focus:ring-2 focus:ring-orange-500 focus:outline-none ${
+                isDark
+                  ? 'bg-slate-950/70 border-slate-700 text-slate-200'
+                  : 'bg-white border-gray-300 text-gray-800'
+              }`}
             >
-              <option value="votes">🔥 Most Popular (Votes)</option>
-              <option value="name">🔤 Name (A - Z)</option>
-              <option value="quantity">📦 Stock Quantity</option>
-              <option value="createdAt">🕒 Recently Added</option>
+              <option value="votes"> Most Popular (Votes)</option>
+              <option value="name">Name (A - Z)</option>
+              <option value="quantity">Stock Quantity</option>
+              <option value="createdAt">Recently Added</option>
             </select>
           </div>
         </div>
 
         {/* Filter Pills */}
-        <div className="pt-3 border-t border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div
+          className={`pt-3 border-t flex flex-col md:flex-row md:items-center justify-between gap-3 ${
+            isDark ? 'border-slate-800/80' : 'border-gray-100'
+          }`}
+        >
           {/* Category Pills */}
           <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 sm:pb-0">
             {categories.map((c) => (
@@ -175,7 +210,9 @@ export const SnacksPage: React.FC = () => {
                 onClick={() => handleCategoryChange(c.value)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap flex items-center space-x-1 ${
                   category === c.value
-                    ? 'bg-orange-600 text-white shadow-xs'
+                    ? 'bg-orange-500 text-white shadow-xs'
+                    : isDark
+                    ? 'bg-slate-800/80 text-slate-300 hover:bg-slate-700 hover:text-white'
                     : 'bg-gray-100/80 text-gray-600 hover:bg-gray-200/70 hover:text-gray-900'
                 }`}
               >
@@ -194,7 +231,11 @@ export const SnacksPage: React.FC = () => {
                 onClick={() => handleStatusChange(s.value)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap border ${
                   status === s.value
-                    ? 'bg-gray-900 text-white border-gray-900 shadow-xs'
+                    ? isDark
+                      ? 'bg-slate-800 text-white border-orange-500/50 shadow-xs'
+                      : 'bg-gray-900 text-white border-gray-900 shadow-xs'
+                    : isDark
+                    ? 'bg-slate-900/60 border-slate-700/80 text-slate-300 hover:bg-slate-800'
                     : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                 }`}
               >
@@ -212,10 +253,16 @@ export const SnacksPage: React.FC = () => {
           <p className="mt-4 text-sm text-gray-500 font-medium">Loading snacks...</p>
         </div>
       ) : !data || data.items.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-200/80 p-12 text-center max-w-lg mx-auto">
+        <div
+          className={`rounded-2xl border p-12 text-center max-w-lg mx-auto ${
+            isDark
+              ? 'bg-slate-900/60 border-slate-800/90 text-white'
+              : 'bg-white border-gray-200/80 text-gray-900'
+          }`}
+        >
           <span className="text-5xl">🔍</span>
-          <h3 className="mt-3 text-lg font-bold text-gray-900">No snacks found</h3>
-          <p className="mt-1 text-sm text-gray-500">
+          <h3 className="mt-3 text-lg font-bold">No snacks found</h3>
+          <p className={`mt-1 text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
             No items matched your search query or filters. Try adjusting your search keyword or clearing filters.
           </p>
           <Button
@@ -238,8 +285,9 @@ export const SnacksPage: React.FC = () => {
             <SnackCard
               key={snack.id}
               snack={snack}
+              dark={isDark}
               onVoteToggle={handleVoteToggle}
-              onConsume={handleConsume}
+              onConsume={handleConsumeRequest}
             />
           ))}
         </div>
@@ -247,10 +295,14 @@ export const SnacksPage: React.FC = () => {
 
       {/* Pagination Controls */}
       {data && data.pagination.totalPages > 1 && (
-        <div className="flex items-center justify-between pt-6 border-t border-gray-200">
-          <span className="text-xs text-gray-500">
-            Showing Page <strong className="text-gray-800">{data.pagination.page}</strong> of{' '}
-            <strong className="text-gray-800">{data.pagination.totalPages}</strong> ({data.pagination.total} snacks)
+        <div
+          className={`flex items-center justify-between pt-6 border-t ${
+            isDark ? 'border-slate-800' : 'border-gray-200'
+          }`}
+        >
+          <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+            Showing Page <strong className={isDark ? 'text-slate-200' : 'text-gray-800'}>{data.pagination.page}</strong> of{' '}
+            <strong className={isDark ? 'text-slate-200' : 'text-gray-800'}>{data.pagination.totalPages}</strong> ({data.pagination.total} snacks)
           </span>
 
           <div className="flex space-x-2">

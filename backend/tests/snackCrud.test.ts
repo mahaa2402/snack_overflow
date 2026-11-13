@@ -1,3 +1,4 @@
+/// <reference types="jest" />
 import request from 'supertest';
 import { createApp } from '../src/app';
 
@@ -19,7 +20,7 @@ describe('Snack Management REST APIs (GET, POST, PATCH, DELETE /snacks)', () => 
 
     // 2. Authenticate Member
     const memberRes = await request(app).post('/api/auth/login').send({
-      email: 'alice@snackoverflow.com',
+      email: 'priya@snackoverflow.com',
       password: 'Member@123',
     });
     memberToken = memberRes.body.data.token;

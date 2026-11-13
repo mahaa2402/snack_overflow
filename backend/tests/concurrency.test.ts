@@ -1,3 +1,4 @@
+/// <reference types="jest" />
 import request from 'supertest';
 import { createApp } from '../src/app';
 import prisma from '../src/config/database';
@@ -18,7 +19,7 @@ describe('Atomic Concurrency & Stock Transaction Tests', () => {
 
     // 2. Authenticate Member
     const memberRes = await request(app).post('/api/auth/login').send({
-      email: 'alice@snackoverflow.com',
+      email: 'priya@snackoverflow.com',
       password: 'Member@123',
     });
     memberToken = memberRes.body.data.token;
