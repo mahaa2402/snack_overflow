@@ -1,10 +1,10 @@
-# 🍿 Snack Overflow - Modern Office Pantry Management System
+# Snack Overflow - Modern Office Pantry Management System
 
 Snack Overflow is a full-stack office pantry and snack inventory management application built with React, TypeScript, Tailwind CSS, Express, Prisma, and PostgreSQL. Members can browse snacks, consume stock, and vote; administrators manage inventory, restocking, alerts, and activity.
 
 ---
 
-## 🎨 UI & User Experience Redesign
+## UI & User Experience Redesign
 
 The application is styled as a modern SaaS office pantry product:
 - **Clean SaaS Aesthetic:** Light neutral background (`bg-gray-50/70`), warm orange accents (`orange-600`), subtle shadows, rounded cards, and responsive desktop/mobile layouts.
@@ -15,7 +15,7 @@ The application is styled as a modern SaaS office pantry product:
 
 ---
 
-## 🚀 Quickstart
+## Quickstart
 
 ### Prerequisites
 
@@ -76,7 +76,7 @@ Open the Vite URL (normally `http://localhost:5173`). Useful routes:
 - `/login` — sign in
 - `/signup` — register a member account
 
-## 🔑 Demo User Credentials
+## Demo User Credentials
 
 After `npm run seed`, the database contains one Administrator and three Member accounts. Seeded passwords are hashed with bcrypt.
 
@@ -160,7 +160,7 @@ Use the `/api` prefix shown below. Several route groups are also mounted without
 
 The backend accepts authentication through the HttpOnly cookie or `Authorization: Bearer <token>` header. Admin authorization is enforced by server middleware on every admin route; hiding controls in the frontend is only a usability measure. Errors use HTTP status codes such as `400`, `401`, `403`, `404`, and `409`, with the same response envelope.
 
-## 🗃️ Database Schema
+## Database Schema
 
 Prisma models map to PostgreSQL tables named `users`, `snacks`, `votes`, and `activities`.
 
@@ -175,7 +175,7 @@ Database constraints also enforce `snacks.quantity >= 0` and `activities.amount 
 
 ---
 
-## 🔒 Authentication and Authorization
+## Authentication and Authorization
 
 - Login verifies bcrypt password hashes and issues a signed JWT in an HttpOnly cookie; the API also accepts a bearer token.
 - Public signup always assigns `MEMBER`; clients cannot grant themselves the `ADMIN` role.
@@ -183,7 +183,7 @@ Database constraints also enforce `snacks.quantity >= 0` and `activities.amount 
 - Snack browsing and health checks are public. Consumption, voting, personal activity, and the general realtime stream require authentication. Inventory management, global activity, restock, alerts, and admin analytics require `ADMIN`.
 - Password hashes are never returned by the API. Frontend role-based navigation does not replace server-side authorization.
 
-## ⚡ Concurrency & Stock Correctness Architecture
+## Concurrency & Stock Correctness Architecture
 
 ### 1. Conditional Atomic Decrement
 To prevent race conditions and overselling under high concurrency:
@@ -210,7 +210,7 @@ Both consumption and restocking execute inside `prisma.$transaction`:
 - If activity insertion or any constraint fails, the entire transaction rolls back automatically.
 - A PostgreSQL storage-level `CHECK (quantity >= 0)` constraint serves as an absolute barrier against negative stock.
 
-## 🔄 Live Stock and Vote Updates Across Tabs
+## Live Stock and Vote Updates Across Tabs
 
 Authenticated browser tabs connect to `GET /api/realtime/stream` using the HttpOnly authentication cookie. The server sends a `data-change` SSE event after successful snack creation, editing, deletion, consumption, restocking, or voting/unvoting. Each open tab then reloads the relevant snack, vote, dashboard, activity, and restock data through the API. A `connected` event also triggers a refresh after a reconnect, so tabs recover the latest state after a dropped connection.
 
@@ -220,7 +220,7 @@ The broadcaster is in-process; deployments running multiple backend instances ne
 
 ---
 
-## ⚡ Smart Restock List & Alert Notification System
+##  Smart Restock List & Alert Notification System
 
 The Smart Restock system provides predictive replenishment analytics and live inventory alerts exclusively for administrators.
 
@@ -286,7 +286,7 @@ await prisma.$transaction(async (tx) => {
 
 ---
 
-## 🧭 Design Decisions and Scaling Notes
+## Design Decisions and Scaling Notes
 
 ### Key decisions and trade-offs
 
