@@ -1,6 +1,6 @@
 # 🍿 Snack Overflow - Modern Office Pantry Management System
 
-Snack Overflow is a full-stack office pantry and snack inventory management application built with React, TypeScript, Tailwind CSS, Express, and Prisma ORM with PostgreSQL.
+Snack Overflow is a full-stack office pantry and snack inventory management application built with React, TypeScript, Tailwind CSS, Express, Prisma, and PostgreSQL. Members can browse snacks, consume stock, and vote; administrators manage inventory, restocking, alerts, and activity.
 
 ---
 
@@ -15,9 +15,70 @@ The application is styled as a modern SaaS office pantry product:
 
 ---
 
+## 🚀 Quickstart
+
+### Prerequisites
+
+- Node.js and npm
+- PostgreSQL running locally or reachable from your machine
+- A PostgreSQL database matching `DATABASE_URL` (the example uses `snack_overflow`)
+
+### Configure the environment
+
+From the repository root, copy the examples:
+
+```powershell
+Copy-Item backend\.env.example backend\.env
+Copy-Item frontend\.env.example frontend\.env
+```
+
+Edit `backend\.env` for your PostgreSQL username, password, host, and database. Set `JWT_SECRET` to a long, unique random value and do not commit either `.env` file. The backend has a development fallback if the variable is omitted; never rely on that fallback outside local development.
+
+The backend example allows `http://localhost:5173`. If Vite starts on a different port, update `CORS_ORIGIN` to match the frontend origin.
+
+Create the database if it does not already exist:
+
+```powershell
+createdb -U postgres snack_overflow
+```
+
+Alternatively, run `CREATE DATABASE snack_overflow;` in `psql`. Adjust the database name or connection string as needed.
+
+### Start the backend
+
+```powershell
+Set-Location backend
+npm install
+npm run prisma:generate
+npm run prisma:migrate
+npm run seed
+npm run dev
+```
+
+The API listens on `http://localhost:5000`. Run the seed once against a fresh development database. It sets seeded snack quantities and adds sample activity history; rerunning it resets those quantities and appends more history.
+
+### Start the frontend
+
+In a second terminal from the repository root:
+
+```powershell
+Set-Location frontend
+npm install
+npm run dev
+```
+
+Open the Vite URL (normally `http://localhost:5173`). Useful routes:
+
+- `/` — pantry dashboard
+- `/snacks` — snack inventory, search, filters, and pagination
+- `/my-pantry` — signed-in member dashboard
+- `/admin` — administrator dashboard
+- `/login` — sign in
+- `/signup` — register a member account
+
 ## 🔑 Demo User Credentials
 
-The database comes pre-seeded with one Administrator and three Member accounts (all passwords hashed with bcrypt):
+After `npm run seed`, the database contains one Administrator and three Member accounts. Seeded passwords are hashed with bcrypt.
 
 | Role | Name | Email | Password | Permissions & Views |
 | :--- | :--- | :--- | :--- | :--- |
@@ -26,41 +87,17 @@ The database comes pre-seeded with one Administrator and three Member accounts (
 | **MEMBER** | Rekha | `rekha@snackoverflow.com` | `Member@123` | Office Pantry, Vote for snacks, Grab/Consume snacks, Profile view |
 | **MEMBER** | Karthik | `karthik@snackoverflow.com` | `Member@123` | Office Pantry, Vote for snacks, Grab/Consume snacks, Profile view |
 
-*Tip: The web Login page features instant one-click demo account filling for seamless testing.*
+Do not use these demo credentials in production.
 
----
+## 🧪 Automated Tests
 
-## 🚀 Quickstart
+The backend suite currently contains 97 tests across 11 suites. Tests use PostgreSQL and seeded users; run them against a local test/development database, never a production database.
 
-### 1. Backend Setup
-```bash
-cd backend
-npm install
-npm run prisma:generate
-npm run prisma:migrate
-npm run seed              # Seeds demo users, 16 snacks, initial votes, and activities
-npm run dev               # Starts API on http://localhost:5000
-```
-
-### 2. Frontend Setup
-```bash
-cd frontend
-npm install
-npm run dev               # Starts UI on http://localhost:5173
-```
-- **Pantry Dashboard:** `http://localhost:5173`
-- **Snack Inventory & Filters:** `http://localhost:5173/snacks`
-- **My Pantry:** `http://localhost:5173/my-pantry` (sign in to view your personal dashboard)
-- **Admin Dashboard (Admin only):** `http://localhost:5173/admin`
-- **Sign In:** `http://localhost:5173/login`
-- **Register Member:** `http://localhost:5173/signup`
-
-### 3. Automated Test Suite (97 Tests across 11 Test Suites)
 ```bash
 cd backend
 npm test
 ```
-Runs 95 integration and unit tests covering:
+Coverage includes:
 - **Smart Restock & Real-Time Alerts:** Urgency formulas (CRITICAL, HIGH, MEDIUM), 7-day average daily consumption, days left, suggested quantities, category filtering, 401/403 admin authorization guards, atomic batch restock transaction rollback, and concurrent restock/consume race safety.
 - **Atomic Concurrency & Anti-Overselling:** Simulates 10 simultaneous requests to consume the last 3 items using `Promise.all`; verifies exactly 3 succeed (200), 7 fail with 409 Conflict, final stock is 0, and exactly 3 consumption activity records are logged in PostgreSQL.
 - **Stock Consumption & Restocking:** Atomic conditional updates via `updateMany`, transaction rollback safety, and positive integer validation.
@@ -73,7 +110,78 @@ Runs 95 integration and unit tests covering:
 - **JWT authentication, bcrypt password security, and public member registration:** Role elevation prevention, cookie/bearer auth, password hashing verification.
 - **Realtime update delivery:** Authenticated SSE stream authorization and inventory/vote change event broadcasts.
 
+## 🌐 API Reference
+
+Use the `/api` prefix shown below. Several route groups are also mounted without that prefix for compatibility. Successful responses use `{ "success": true, "message": "...", "data": ..., "timestamp": "..." }`; errors include `success: false`, a top-level `message`, and `error.code`.
+
+### Authentication
+
+| Method | Endpoint | Access | Notes |
+|---|---|---|---|
+| `POST` | `/api/auth/signup` | Public | Body: `{ name, email, password }`; public registration always creates a `MEMBER`. |
+| `POST` | `/api/auth/login` | Public | Body: `{ email, password }`; sets an HttpOnly cookie and returns a bearer token. |
+| `GET` | `/api/auth/me` | Signed in | Current user profile. |
+| `POST` | `/api/auth/logout` | Public | Clears the authentication cookie. |
+
+### Snacks and votes
+
+| Method | Endpoint | Access | Notes |
+|---|---|---|---|
+| `GET` | `/api/snacks` | Public | Server-side `search`, `category`, `status`, `page`, `limit`, and `sortBy` filters. Categories: `SWEET`, `SAVOURY`, `DRINK`, `HEALTHY_ISH`; statuses: `STOCKED`, `RUNNING_LOW`, `GONE`. |
+| `GET` | `/api/snacks/:id` | Public | One snack, including vote count and derived status. |
+| `GET` | `/api/snacks/stats` | Public | Inventory and activity summary counts. |
+| `GET` | `/api/snacks/popular?limit=4` | Public | Most-voted snacks. |
+| `GET` | `/api/snacks/featured` | Public | Current highest-voted snack. Despite the UI label, this currently uses all-time votes, not a weekly date window. |
+| `POST` | `/api/snacks` | Admin | Create a snack; body includes `name`, `category`, optional `quantity` and `lowStockThreshold`. |
+| `PATCH` / `PUT` | `/api/snacks/:id` | Admin | Update snack fields. |
+| `DELETE` | `/api/snacks/:id` | Admin | Delete a snack and its associated votes/activity records. |
+| `POST` | `/api/snacks/:id/consume` | Signed in | Body: `{ amount }` (defaults to 1); atomic stock decrement. Returns `409 INSUFFICIENT_STOCK` when unavailable. |
+| `POST` | `/api/snacks/:id/restock` | Admin | Body: `{ amount }`. |
+| `POST` | `/api/snacks/:id/vote` | Signed in | Optional body: `{ action: "vote" \| "unvote" \| "toggle" }`; default is toggle. |
+| `DELETE` | `/api/snacks/:id/vote` | Signed in | Removes the current user's vote. |
+| `DELETE` | `/api/votes/:id` | Signed in | Deletes the identified vote only when it belongs to the caller. |
+
+### Activity, admin, restock, and live updates
+
+| Method | Endpoint | Access | Notes |
+|---|---|---|---|
+| `GET` | `/api/activities/me` | Signed in | Current user's consumption history. |
+| `GET` | `/api/activities/me/dashboard` | Signed in | Personal pantry metrics and timeline. |
+| `GET` | `/api/activities` | Admin | Global activity feed. |
+| `GET` | `/api/admin/dashboard` | Admin | Admin dashboard metrics and recent activity. |
+| `GET` | `/api/admin/users` | Admin | User roster; sensitive fields are not returned. |
+| `GET` | `/api/admin/insights` | Admin | Pantry insights and consumption trends. |
+| `GET` | `/api/restock/suggestions?category=DRINK` | Admin | Low/out-of-stock recommendations. |
+| `POST` | `/api/restock/all` | Admin | Atomic batch restock. Optional body: `{ "items": [{ "snackId": "...", "amount": 5 }] }`; without items, restocks all current suggestions. |
+| `GET` | `/api/alerts` | Admin | Current shortage alerts. |
+| `GET` | `/api/alerts/stream` | Admin | SSE stream for alert refreshes. |
+| `GET` | `/api/realtime/stream` | Signed in | SSE stream for inventory and vote changes across open tabs. |
+| `GET` | `/api/health` | Public | API and database health status. |
+
+The backend accepts authentication through the HttpOnly cookie or `Authorization: Bearer <token>` header. Admin authorization is enforced by server middleware on every admin route; hiding controls in the frontend is only a usability measure. Errors use HTTP status codes such as `400`, `401`, `403`, `404`, and `409`, with the same response envelope.
+
+## 🗃️ Database Schema
+
+Prisma models map to PostgreSQL tables named `users`, `snacks`, `votes`, and `activities`.
+
+| Model | Important fields and constraints |
+|---|---|
+| `User` | UUID id, name, unique email, bcrypt password hash, `ADMIN`/`MEMBER` role. |
+| `Snack` | UUID id, unique name, category, integer quantity, low-stock threshold, timestamps. `STOCKED`, `RUNNING_LOW`, and `GONE` are derived from quantity and threshold, not stored. |
+| `Vote` | User/snack foreign keys and creation time; unique constraint on `(userId, snackId)` prevents duplicate votes. Deleting a user or snack cascades to its votes. |
+| `Activity` | User/snack foreign keys, `CONSUMED`/`RESTOCKED` action, positive amount, and timestamp. Foreign keys restrict deletion until related activity is handled. |
+
+Database constraints also enforce `snacks.quantity >= 0` and `activities.amount > 0`. Indexes support snack category, vote lookups, and activity timelines.
+
 ---
+
+## 🔒 Authentication and Authorization
+
+- Login verifies bcrypt password hashes and issues a signed JWT in an HttpOnly cookie; the API also accepts a bearer token.
+- Public signup always assigns `MEMBER`; clients cannot grant themselves the `ADMIN` role.
+- Protected routes verify the token on the server. Admin operations additionally check the verified role and return `403` for members; missing or invalid authentication returns `401`.
+- Snack browsing and health checks are public. Consumption, voting, personal activity, and the general realtime stream require authentication. Inventory management, global activity, restock, alerts, and admin analytics require `ADMIN`.
+- Password hashes are never returned by the API. Frontend role-based navigation does not replace server-side authorization.
 
 ## ⚡ Concurrency & Stock Correctness Architecture
 
@@ -121,7 +229,7 @@ The Smart Restock system provides predictive replenishment analytics and live in
 | Method | Endpoint | Description | Guard |
 | :--- | :--- | :--- | :--- |
 | `GET` | `/restock/suggestions` | Retrieves running-low and out-of-stock snacks with replenishment metrics and urgency. Accepts `?category=<CATEGORY>`. | Admin Only (`401/403`) |
-| `POST` | `/restock/all` | Atomically restocks multiple snacks with custom quantities in a single transaction. Body: `{ items: [{ snackId, quantity }] }`. | Admin Only (`401/403`) |
+| `POST` | `/restock/all` | Atomically restocks multiple snacks with custom quantities in a single transaction. Body: `{ items: [{ snackId, amount }] }`. | Admin Only (`401/403`) |
 | `GET` | `/alerts` | Fetches live stock shortage alerts (`CRITICAL` for 0 stock, `WARNING` for `quantity <= lowStockThreshold`). | Admin Only (`401/403`) |
 | `GET` | `/alerts/stream` | Server-Sent Events (SSE) stream for real-time stock shortage notifications and live refresh triggers. | Admin Only (`401/403`) |
 
@@ -153,14 +261,14 @@ await prisma.$transaction(async (tx) => {
   for (const item of items) {
     await tx.snack.update({
       where: { id: item.snackId },
-      data: { quantity: { increment: item.quantity } },
+      data: { quantity: { increment: item.amount } },
     });
     await tx.activity.create({
       data: {
         userId,
         snackId: item.snackId,
         action: 'RESTOCKED',
-        quantity: item.quantity,
+        amount: item.amount,
       },
     });
   }
@@ -178,4 +286,21 @@ await prisma.$transaction(async (tx) => {
 
 ---
 
-For architectural details, schema explanations, and API endpoints, refer to [IMPLEMENTATION_DETAILS.md](./IMPLEMENTATION_DETAILS.md).
+## 🧭 Design Decisions and Scaling Notes
+
+### Key decisions and trade-offs
+
+- **PostgreSQL owns inventory correctness.** A conditional `UPDATE` avoids the unsafe read-then-decrement pattern. The transaction records the corresponding activity with the stock mutation; a database `CHECK` is the final guard against negative stock. This favors correctness over optimistic application-level checks.
+- **The schema enforces vote uniqueness.** The composite unique constraint is the guarantee, including under simultaneous requests. The service can return a friendly conflict, but the database remains authoritative.
+- **JWT plus role middleware keeps authorization server-side.** Public registration creates members only. Set a strong `JWT_SECRET` explicitly; the backend has a development fallback, which must not be used in a deployed environment.
+- **SSE is used for one-way live updates.** Browsers receive change notifications and refetch canonical API data rather than treating event payloads as inventory state. This is simpler than WebSockets for this use case, but the current event broadcaster is process-local.
+
+### What is likely to break first at 100×
+
+
+
+1. **Realtime fan-out across replicas:** Connected SSE clients are held in memory by one Node process. Tabs connected to different backend instances will not receive each other's events. Add a shared broker such as Redis Pub/Sub or PostgreSQL `LISTEN/NOTIFY` before horizontal scaling.
+2. **Read and connection load during bursts:** Each event causes open tabs to refetch their relevant views. A burst therefore multiplies database reads by the number of open tabs. Coalesce events, debounce refreshes, and consider a shared client cache before browser/API request fan-out becomes costly.
+3. **Database-backed summaries and search:** `getPantryStats` reads snack quantities to calculate derived counts, while case-insensitive substring search can become expensive as inventory grows. Measure query plans; move aggregations into SQL and add appropriate search indexes/caching if these become hot paths. Size the connection pool and database from load-test results rather than guessing.
+
+
