@@ -10,7 +10,6 @@ import {
   Heart,
   LoaderCircle,
   PackageCheck,
-  RefreshCw,
   ShoppingBag,
   Sparkles,
   ThumbsUp,
