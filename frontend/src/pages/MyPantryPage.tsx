@@ -20,6 +20,7 @@ import { getMyPantryDashboardApi } from '../api/snack.api';
 import { MyPantryDashboard } from '../types/snack';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useRealtimeRefresh } from '../context/RealtimeUpdatesContext';
 
 interface ChartEntry {
   key: string;
@@ -164,6 +165,8 @@ export const MyPantryPage: React.FC = () => {
   useEffect(() => {
     void loadDashboard();
   }, [loadDashboard]);
+
+  useRealtimeRefresh(loadDashboard);
 
   const monthName = new Date().toLocaleDateString('en-US', { month: 'long' });
 

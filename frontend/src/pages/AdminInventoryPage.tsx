@@ -12,6 +12,7 @@ import { SnackModal } from '../components/snacks/SnackModal';
 import { RestockModal } from '../components/snacks/RestockModal';
 import { getSnackImageUrl } from '../utils/snackImages';
 import { useTheme } from '../context/ThemeContext';
+import { useRealtimeRefresh } from '../context/RealtimeUpdatesContext';
 import { AlertTriangle, Boxes, CirclePlus, Package, PackagePlus, PackageX, Search, ThumbsUp, Trash2 } from 'lucide-react';
 
 export const AdminInventoryPage: React.FC = () => {
@@ -57,6 +58,8 @@ export const AdminInventoryPage: React.FC = () => {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  useRealtimeRefresh(loadData);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);

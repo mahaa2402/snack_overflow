@@ -55,7 +55,7 @@ npm run dev               # Starts UI on http://localhost:5173
 - **Sign In:** `http://localhost:5173/login`
 - **Register Member:** `http://localhost:5173/signup`
 
-### 3. Automated Test Suite (95 Tests across 10 Test Suites)
+### 3. Automated Test Suite (97 Tests across 11 Test Suites)
 ```bash
 cd backend
 npm test
@@ -71,6 +71,7 @@ Runs 95 integration and unit tests covering:
 - **Admin CRUD & Restock operations:** Add, edit, delete with cascade/cleanup, and restock.
 - **Member access control & 403 Forbidden protection:** Unprivileged users cannot restock, edit, or delete snacks.
 - **JWT authentication, bcrypt password security, and public member registration:** Role elevation prevention, cookie/bearer auth, password hashing verification.
+- **Realtime update delivery:** Authenticated SSE stream authorization and inventory/vote change event broadcasts.
 
 ---
 
@@ -100,6 +101,14 @@ Both consumption and restocking execute inside `prisma.$transaction`:
 - Quantity update and `Activity` insertion (`action: 'CONSUMED'` or `'RESTOCKED'`) occur in the same database transaction.
 - If activity insertion or any constraint fails, the entire transaction rolls back automatically.
 - A PostgreSQL storage-level `CHECK (quantity >= 0)` constraint serves as an absolute barrier against negative stock.
+
+## 🔄 Live Stock and Vote Updates Across Tabs
+
+Authenticated browser tabs connect to `GET /api/realtime/stream` using the HttpOnly authentication cookie. The server sends a `data-change` SSE event after successful snack creation, editing, deletion, consumption, restocking, or voting/unvoting. Each open tab then reloads the relevant snack, vote, dashboard, activity, and restock data through the API. A `connected` event also triggers a refresh after a reconnect, so tabs recover the latest state after a dropped connection.
+
+The event contains only the change type, affected snack ID when available, and timestamp; clients fetch current values from the API rather than trusting event payloads as inventory state. The stream requires authentication. The existing admin-only `/api/alerts/stream` remains dedicated to stock alerts.
+
+The broadcaster is in-process; deployments running multiple backend instances need a shared event broker to notify clients connected to different instances.
 
 ---
 

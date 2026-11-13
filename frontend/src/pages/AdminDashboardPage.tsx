@@ -14,6 +14,7 @@ import { SnackModal } from '../components/snacks/SnackModal';
 import { RestockModal } from '../components/snacks/RestockModal';
 import { getSnackImageUrl } from '../utils/snackImages';
 import { useTheme } from '../context/ThemeContext';
+import { useRealtimeRefresh } from '../context/RealtimeUpdatesContext';
 import {
   Activity,
   AlertTriangle,
@@ -307,6 +308,8 @@ export const AdminDashboardPage: React.FC = () => {
   useEffect(() => {
     loadAdminData();
   }, [loadAdminData]);
+
+  useRealtimeRefresh(loadAdminData);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);

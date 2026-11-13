@@ -48,12 +48,8 @@ export const NotificationBell: React.FC = () => {
 
     let eventSource: EventSource | null = null;
     try {
-      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
       const apiBaseUrl = (apiClient.defaults.baseURL || 'http://localhost:5000/api').replace(/\/+$/, '');
       const streamUrl = new URL(`${apiBaseUrl}/alerts/stream`, window.location.origin);
-      if (token) {
-        streamUrl.searchParams.set('token', token);
-      }
       eventSource = new EventSource(streamUrl.toString(), { withCredentials: true });
 
       eventSource.onmessage = (event) => {

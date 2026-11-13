@@ -15,6 +15,7 @@ import {
 import { AppError } from '../utils/customError';
 import { deriveSnackStatus, withDerivedStatus } from '../utils/snackStatus';
 import { alertEmitterService } from './alertEmitter.service';
+import { realtimeEmitterService } from './realtimeEmitter.service';
 
 export class SnackService {
   /**
@@ -180,7 +181,7 @@ export class SnackService {
       throw new AppError('A snack with this name already exists', 409, 'CONFLICT');
     }
 
-    return prisma.$transaction(async (tx) => {
+    const created = await prisma.$transaction(async (tx) => {
       const newSnack = await tx.snack.create({
         data: {
           name,
@@ -208,6 +209,10 @@ export class SnackService {
         hasVoted: false,
       };
     });
+
+    realtimeEmitterService.broadcast('inventory', created.id);
+    alertEmitterService.broadcastRefresh();
+    return created;
   }
 
   /**
@@ -255,11 +260,15 @@ export class SnackService {
       },
     });
 
-    return {
+    const result = {
       ...withDerivedStatus(updated),
       voteCount: updated._count.votes,
       hasVoted: false,
     };
+
+    realtimeEmitterService.broadcast('inventory', id);
+    alertEmitterService.broadcastRefresh();
+    return result;
   }
 
   /**
@@ -275,7 +284,7 @@ export class SnackService {
       throw new AppError('Snack not found', 404, 'NOT_FOUND');
     }
 
-    return prisma.$transaction(async (tx) => {
+    const deleted = await prisma.$transaction(async (tx) => {
       // 1. Delete associated activities (Activity has Restrict onDelete)
       await tx.activity.deleteMany({
         where: { snackId: id },
@@ -291,6 +300,10 @@ export class SnackService {
         where: { id },
       });
     });
+
+    realtimeEmitterService.broadcast('inventory', id);
+    alertEmitterService.broadcastRefresh();
+    return deleted;
   }
 
   /**
@@ -303,7 +316,7 @@ export class SnackService {
       throw new AppError('Restock amount must be a positive integer (> 0)', 400, 'VALIDATION_ERROR');
     }
 
-    return prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
       // 1. Verify snack exists
       const existing = await tx.snack.findUnique({
         where: { id },
@@ -348,6 +361,10 @@ export class SnackService {
         activity,
       };
     });
+
+    realtimeEmitterService.broadcast('inventory', id);
+    alertEmitterService.broadcastRefresh();
+    return result;
   }
 
   /**
@@ -431,6 +448,7 @@ export class SnackService {
       };
     });
 
+    realtimeEmitterService.broadcast('inventory', snackId);
     if (result.snack.quantity <= result.snack.lowStockThreshold) {
       alertEmitterService.broadcastRefresh();
     }
@@ -506,6 +524,7 @@ export class SnackService {
 
     const hasVoted = action === 'vote' ? true : action === 'unvote' ? false : !existingVote;
 
+    realtimeEmitterService.broadcast('votes', snackId);
     return {
       hasVoted,
       voteCount,
@@ -548,6 +567,7 @@ export class SnackService {
       where: { snackId: vote.snackId },
     });
 
+    realtimeEmitterService.broadcast('votes', vote.snackId);
     return {
       snackId: vote.snackId,
       voteCount,

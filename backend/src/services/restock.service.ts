@@ -10,6 +10,7 @@ import {
 import { AppError } from '../utils/customError';
 import { deriveSnackStatus } from '../utils/snackStatus';
 import { alertEmitterService } from './alertEmitter.service';
+import { realtimeEmitterService } from './realtimeEmitter.service';
 
 export class RestockService {
   /**
@@ -241,7 +242,7 @@ export class RestockService {
       };
     });
 
-    // Notify connected admin SSE clients that inventory was replenished
+    realtimeEmitterService.broadcast('inventory');
     alertEmitterService.broadcastRefresh();
 
     return result;

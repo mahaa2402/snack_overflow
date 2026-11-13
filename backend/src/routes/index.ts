@@ -7,6 +7,7 @@ import voteRoutes from './vote.routes';
 import activityRoutes from './activity.routes';
 import restockRoutes from './restock.routes';
 import alertRoutes from './alert.routes';
+import realtimeRoutes from './realtime.routes';
 
 const router = Router();
 
@@ -19,5 +20,6 @@ router.use('/votes', voteRoutes);
 router.use('/activities', activityRoutes);
 router.use('/restock', restockRoutes);
 router.use('/alerts', alertRoutes);
+router.use('/realtime', realtimeRoutes);
 
 export default router;

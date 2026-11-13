@@ -8,6 +8,7 @@ import { ActivityTimeline } from '../components/activity/ActivityTimeline';
 import { RestockModal } from '../components/snacks/RestockModal';
 import { Button } from '../components/common/Button';
 import { Activity, AlertTriangle, Boxes, ChartNoAxesCombined, PackagePlus, Trophy, TrendingUp, ThumbsUp } from 'lucide-react';
+import { useRealtimeRefresh } from '../context/RealtimeUpdatesContext';
 
 export const AdminInsightsPage: React.FC = () => {
   const [insights, setInsights] = useState<PantryInsights | null>(null);
@@ -39,6 +40,8 @@ export const AdminInsightsPage: React.FC = () => {
   useEffect(() => {
     fetchInsights();
   }, [fetchInsights]);
+
+  useRealtimeRefresh(fetchInsights);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);

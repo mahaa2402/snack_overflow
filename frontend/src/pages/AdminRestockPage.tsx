@@ -4,6 +4,7 @@ import { getRestockSuggestionsApi, restockAllApi } from '../api/restock.api';
 import { restockSnackApi } from '../api/snack.api';
 import { getCategoryEmoji, getSnackImageUrl } from '../utils/snackImages';
 import { useTheme } from '../context/ThemeContext';
+import { useRealtimeRefresh } from '../context/RealtimeUpdatesContext';
 
 export const AdminRestockPage: React.FC = () => {
   const { isDark } = useTheme();
@@ -56,6 +57,8 @@ export const AdminRestockPage: React.FC = () => {
   useEffect(() => {
     fetchSuggestions();
   }, [fetchSuggestions]);
+
+  useRealtimeRefresh(fetchSuggestions, 'inventory');
 
   const showToast = (msg: string) => {
     setToastMessage(msg);

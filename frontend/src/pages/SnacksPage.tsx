@@ -6,6 +6,7 @@ import { GrabSnackModal } from '../components/snacks/GrabSnackModal';
 import { ActionToast } from '../components/common/ActionToast';
 import { Button } from '../components/common/Button';
 import { useTheme } from '../context/ThemeContext';
+import { useRealtimeRefresh } from '../context/RealtimeUpdatesContext';
 
 export const SnacksPage: React.FC = () => {
   const { isDark } = useTheme();
@@ -56,6 +57,8 @@ export const SnacksPage: React.FC = () => {
   useEffect(() => {
     fetchSnacks();
   }, [fetchSnacks]);
+
+  useRealtimeRefresh(fetchSnacks);
 
   // Reset to page 1 on filter change
   const handleCategoryChange = (newCat: string) => {

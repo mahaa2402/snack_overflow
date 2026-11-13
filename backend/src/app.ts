@@ -9,6 +9,7 @@ import voteRoutes from './routes/vote.routes';
 import activityRoutes from './routes/activity.routes';
 import restockRoutes from './routes/restock.routes';
 import alertRoutes from './routes/alert.routes';
+import realtimeRoutes from './routes/realtime.routes';
 import { requestLogger } from './middlewares/requestLogger';
 import { notFoundHandler } from './middlewares/notFoundHandler';
 import { errorHandler } from './middlewares/errorHandler';
@@ -54,6 +55,7 @@ export const createApp = (): Application => {
   app.use('/activities', activityRoutes);
   app.use('/restock', restockRoutes);
   app.use('/alerts', alertRoutes);
+  app.use('/realtime', realtimeRoutes);
 
   // Central API routes under /api
   app.use('/api', apiRoutes);

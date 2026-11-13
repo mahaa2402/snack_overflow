@@ -15,6 +15,7 @@ import { ActionToast } from '../components/common/ActionToast';
 import { getSnackImageUrl } from '../utils/snackImages';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useRealtimeRefresh } from '../context/RealtimeUpdatesContext';
 
 /* -------------------------------------------------------------------------- */
 /*  CSS Keyframes & Reduced-Motion Accessibility                              */
@@ -370,7 +371,7 @@ const SnackCell: React.FC<{ index: number; children: React.ReactNode }> = ({ ind
 /*  Main HomePage Component                                                   */
 /* -------------------------------------------------------------------------- */
 export const HomePage: React.FC = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isAdmin } = useAuth();
   const { isDark } = useTheme();
 
   const [stats, setStats] = useState<PantryStats | null>(null);
@@ -419,6 +420,8 @@ export const HomePage: React.FC = () => {
   useEffect(() => {
     loadDashboardData();
   }, [loadDashboardData]);
+
+  useRealtimeRefresh(loadDashboardData);
 
   const extractMessage = (err: unknown, fallback: string): string =>
     typeof err === 'object' && err !== null && 'message' in err
@@ -565,7 +568,7 @@ export const HomePage: React.FC = () => {
         </div>
 
         {/* Stock Health Bar & Capacity Overview */}
-        {!isLoading && total > 0 && (
+        {isAdmin && !isLoading && total > 0 && (
           <div
             style={delay(450)}
             className={`pantry-rise pantry-motion group rounded-2xl p-5 transition-all duration-300 ${
@@ -618,7 +621,7 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* Running Out of Stock Quick Action Widget */}
-      {!isLoading && lowStockSnacks.length > 0 && (
+      {isAdmin && !isLoading && lowStockSnacks.length > 0 && (
         <section
           style={delay(350)}
           className={`pantry-rise rounded-2xl p-5 transition-all duration-300 ${

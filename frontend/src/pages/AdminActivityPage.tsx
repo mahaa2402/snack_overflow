@@ -3,6 +3,7 @@ import { ActivityItem } from '../types/snack';
 import { getActivitiesApi } from '../api/snack.api';
 import { getSnackImageUrl } from '../utils/snackImages';
 import { useTheme } from '../context/ThemeContext';
+import { useRealtimeRefresh } from '../context/RealtimeUpdatesContext';
 import { Activity, Boxes, ClipboardList, PackagePlus, Search, ShoppingBag } from 'lucide-react';
 
 export const AdminActivityPage: React.FC = () => {
@@ -28,6 +29,8 @@ export const AdminActivityPage: React.FC = () => {
   useEffect(() => {
     fetchActivities();
   }, [fetchActivities]);
+
+  useRealtimeRefresh(fetchActivities, 'inventory');
 
   const filtered = activities.filter((item) => {
     if (!search.trim()) return true;
