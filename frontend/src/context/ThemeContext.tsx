@@ -20,8 +20,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (saved === 'light' || saved === 'dark') {
       return saved;
     }
-    // 2. Default to 'dark' for modern SaaS experience
-    return 'dark';
+    // 2. Use light mode when no preference has been saved yet
+    return 'light';
   });
 
   const isDark = theme === 'dark';
